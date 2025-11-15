@@ -6,118 +6,116 @@
   <title>ValiTec MJ — Lista de Produtos</title>
   <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;500;700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="dashboard.css">
+  <!-- libs para export -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.26/jspdf.plugin.autotable.min.js"></script>
 
-<style>
-/* Ajuste para caber na tela do celular (card compacto) */
-.produto-card {
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
-  padding: 10px;
-  border-radius: 10px;
-  background: rgba(255,255,255,0.05);
-  backdrop-filter: blur(6px);
-}
-
-.produto-card img {
-  width: 60px;
-  height: 60px;
-  object-fit: cover;
-  border-radius: 6px;
-}
-
-/* GRID DOS BOTÕES 2x2 mais compacto */
-.botoes-container {
-  display: grid;
-  grid-template-columns: repeat(2, 1fr);
-  gap: 6px;
-  width: 100%;
-  margin-top: 6px;
-}
-
-.botoes-container button,
-.botoes-container a {
-  width: 100%;
-  padding: 6px 8px;   /* reduzido */
-  font-size: 12px;    /* reduzido */
-  border-radius: 6px;
-  white-space: nowrap;
-  text-align: center;
-  border: none;
-  cursor: pointer;
-}
-
-/* melhorar texto em telas pequenas */
-.produto-card strong {
-  font-size: 14px;
-}
-
-.produto-card span,
-.produto-card div {
-  font-size: 12px;
-}
-
-/* Força bom encaixe no celular */
-@media (max-width: 480px) {
+  <style>
+  /* Ajuste para caber na tela do celular (card compacto) */
   .produto-card {
-    padding: 8px;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    padding: 10px;
+    border-radius: 10px;
+    background: rgba(255,255,255,0.05);
+    backdrop-filter: blur(6px);
   }
+
   .produto-card img {
-    width: 55px;
-    height: 55px;
+    width: 60px;
+    height: 60px;
+    object-fit: cover;
+    border-radius: 6px;
   }
+
+  /* GRID DOS BOTÕES 2x2 mais compacto */
+  .botoes-container {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 6px;
+    width: 100%;
+    margin-top: 6px;
+  }
+
   .botoes-container button,
   .botoes-container a {
-    font-size: 11px;
-    padding: 6px;
+    width: 100%;
+    padding: 6px 8px;   /* reduzido */
+    font-size: 12px;    /* reduzido */
+    border-radius: 6px;
+    white-space: nowrap;
+    text-align: center;
+    border: none;
+    cursor: pointer;
   }
-}
 
-/* MENU HAMBÚRGUER FIXO E FUNCIONAL */
-.sidebar {
-  position: fixed;
-  left: -260px;
-  top: 0;
-  width: 260px;
-  height: 100vh;
-  transition: 0.3s ease;
-  z-index: 9999;
-}
+  /* melhorar texto em telas pequenas */
+  .produto-card strong {
+    font-size: 14px;
+  }
 
-.sidebar.open {
-  left: 0;
-}
+  .produto-card span,
+  .produto-card div {
+    font-size: 12px;
+  }
 
-.hamburger {
-  position: fixed;
-  top: 15px;
-  left: 15px;
-  font-size: 28px;
-  background: var(--accent);
-  color: #fff;
-  border: none;
-  border-radius: 6px;
-  padding: 6px 12px;
-  cursor: pointer;
-  z-index: 10000;
-}
+  /* Força bom encaixe no celular */
+  @media (max-width: 480px) {
+    .produto-card {
+      padding: 8px;
+    }
+    .produto-card img {
+      width: 55px;
+      height: 55px;
+    }
+    .botoes-container button,
+    .botoes-container a {
+      font-size: 11px;
+      padding: 6px;
+    }
+  }
 
-@media(max-width: 900px) {
+  /* MENU HAMBÚRGUER FIXO E FUNCIONAL */
+  .sidebar {
+    position: fixed;
+    left: -260px;
+    top: 0;
+    width: 260px;
+    height: 100vh;
+    transition: 0.3s ease;
+    z-index: 9999;
+  }
+
+  .sidebar.open {
+    left: 0;
+  }
+
+  .hamburger {
+    position: fixed;
+    top: 15px;
+    left: 15px;
+    font-size: 28px;
+    background: var(--accent);
+    color: #fff;
+    border: none;
+    border-radius: 6px;
+    padding: 6px 12px;
+    cursor: pointer;
+    z-index: 10000;
+  }
+
+  @media(max-width: 900px) {
+    .app-container {
+      margin-left: 0 !important;
+    }
+  }
   .app-container {
-    margin-left: 0 !important;
-  }
-
-
-}
-.app-container {
- max-width: 700px;
- margin: auto;
-  }
-
-</style>
+   max-width: 700px;
+   margin: auto;
+    }
+  </style>
 </head>
 <body>
   <canvas id="particleCanvas"></canvas>
@@ -142,7 +140,7 @@
       <h2 class="page-title">Lista de Produtos</h2>
       <input type="text" id="busca" class="input-busca" placeholder="🔍 Buscar por nome, setor, código...">
 
-      <div class="export-container">
+      <div class="export-container" style="display:flex;gap:8px;margin:12px 0;">
         <button id="exportTela" class="btnExport">📄 Exportar Tela (PDF/Excel)</button>
         <button id="exportTudo" class="btnExport">🗂 Exportar Tudo (PDF/Excel)</button>
       </div>
@@ -151,24 +149,16 @@
     </main>
   </div>
 
-
 <script type="module">
-
 /* ============================================================
    IMPORTS
 ============================================================ */
-import { 
-  initializeApp 
-} from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
-
-import { 
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
+import {
   getFirestore, collection, getDocs, getDoc, doc,
-  updateDoc, deleteDoc 
+  updateDoc, deleteDoc
 } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
-
-import { 
-  getAuth, onAuthStateChanged 
-} from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
+import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
 
 /* ============================================================
    FIREBASE INIT
@@ -191,36 +181,23 @@ const auth = getAuth(app);
 ============================================================ */
 let loja = null;
 let cargo = null;
-let produtosCarregados = [];
+let produtosCarregados = []; // todos já carregados (não rebaixados)
 
 /* ============================================================
-   📌 BUSCA CONFIG DA LOJA (whatsGerente / whatsResponsavel)
+   FUNÇÕES UTILS
 ============================================================ */
 async function getConfigDaLoja() {
   const user = auth.currentUser;
   if (!user) return null;
-
   const snapUser = await getDoc(doc(db, "usuarios", user.email));
   if (!snapUser.exists()) return null;
-
-  const loja = snapUser.data().loja;
-  const snapCfg = await getDoc(doc(db, `lojas/${loja}/config/geral`));
-
-  if (!snapCfg.exists()) {
-    return { loja, whatsGerente: "", whatsResponsavel: "" };
-  }
-
+  const lojaUser = snapUser.data().loja;
+  const snapCfg = await getDoc(doc(db, `lojas/${lojaUser}/config/geral`));
+  if (!snapCfg.exists()) return { loja: lojaUser, whatsGerente: "", whatsResponsavel: "" };
   const cfg = snapCfg.data();
-  return {
-    loja,
-    whatsGerente: cfg.whatsGerente || "",
-    whatsResponsavel: cfg.whatsResponsavel || ""
-  };
+  return { loja: lojaUser, whatsGerente: cfg.whatsGerente || "", whatsResponsavel: cfg.whatsResponsavel || "" };
 }
 
-/* ============================================================
-   🔴 WHATSAPP (responsável → gerente)
-============================================================ */
 function abrirWhatsAppParaGerente(numero, texto) {
   if (!numero) return;
   const tel = numero.replace(/\D/g, "");
@@ -229,36 +206,62 @@ function abrirWhatsAppParaGerente(numero, texto) {
 }
 
 /* ============================================================
-   🟡 REBAIXAR PRODUTO
+   REBAIXAR / REVERTER (mantém chamadas compatíveis)
 ============================================================ */
 async function rebaixarProduto(id) {
   const cfg = await getConfigDaLoja();
-  if (!cfg || !cfg.loja) return alert("Loja não encontrada.");
+  if (!cfg || !cfg.loja) return alert("Loja não identificada.");
 
-  const ref = doc(db, `lojas/${cfg.loja}/produtos/${id}`);
-  const snap = await getDoc(ref);
+  const prodRef = doc(db, `lojas/${cfg.loja}/produtos/${id}`);
+  const prodSnap = await getDoc(prodRef);
+  if (!prodSnap.exists()) return alert("Produto não encontrado.");
 
-  if (!snap.exists()) return alert("Produto não encontrado.");
-  const p = snap.data();
+  const p = prodSnap.data();
+  if (p.status === "rebaixado") return alert("Produto já está rebaixado.");
 
-  if (p.status === "rebaixado") return alert("Já está rebaixado.");
-
-  await updateDoc(ref, {
+  await updateDoc(prodRef, {
     status: "rebaixado",
     rebaixadoAt: new Date(),
-    rebaixadoNotified: true
+    rebaixadoNotified: true,
+    lastAlertAt: new Date()
   });
 
-  const msg = `🔻 *PRODUTO REBAIXADO*\nProduto: *${p.nome}*\nCódigo: ${p.codigo}\nLote: ${p.lote}`;
-  abrirWhatsAppParaGerente(cfg.whatsGerente, msg);
+  const texto = `🔻 *PRODUTO REBAIXADO*\nProduto: *${p.nome}*\nCódigo: ${p.codigo}\nLote: ${p.lote}\nRebaixado por: responsável.`;
+  abrirWhatsAppParaGerente(cfg.whatsGerente, texto);
 
-  carregarProdutos();
+  // Atualiza tela
+  await carregarProdutos();
 }
-
 window.rebaixarProduto = rebaixarProduto;
 
+async function reverterRebaixado(id) {
+  const cfg = await getConfigDaLoja();
+  if (!cfg || !cfg.loja) return alert("Loja não identificada.");
+
+  const prodRef = doc(db, `lojas/${cfg.loja}/produtos/${id}`);
+  const prodSnap = await getDoc(prodRef);
+  if (!prodSnap.exists()) return alert("Produto não encontrado.");
+
+  const p = prodSnap.data();
+  if (p.status !== "rebaixado") return alert("Produto não está rebaixado.");
+
+  await updateDoc(prodRef, {
+    status: "normal",
+    rebaixadoNotified: false,
+    revertidoAt: new Date(),
+    revertidoNotified: true,
+    lastAlertAt: new Date()
+  });
+
+  const texto = `✅ *REVERTIDO*\nProduto: *${p.nome}* \nCódigo: ${p.codigo}\nLote: ${p.lote}`;
+  abrirWhatsAppParaGerente(cfg.whatsGerente, texto);
+
+  await carregarProdutos();
+}
+window.reverterRebaixado = reverterRebaixado;
+
 /* ============================================================
-   🟠 VERIFICAR ALERTAS (5 dias)
+   VERIFICAR ALERTAS (5 dias) e atualizar cores
 ============================================================ */
 async function verificarAlertasDeValidade() {
   const cfg = await getConfigDaLoja();
@@ -266,71 +269,70 @@ async function verificarAlertasDeValidade() {
 
   const ref = collection(db, `lojas/${cfg.loja}/produtos`);
   const snap = await getDocs(ref);
-
   const hoje = new Date();
 
-  for (const item of snap.docs) {
-    const p = item.data();
-    const id = item.id;
-
+  for (const docSnap of snap.docs) {
+    const p = docSnap.data();
+    const id = docSnap.id;
     if (!p.dataValidadeISO) continue;
     if (p.status === "rebaixado") continue;
 
     const validade = new Date(p.dataValidadeISO);
-    const diff = Math.ceil((validade - hoje) / 86400000);
+    const diffMs = validade.setHours(0,0,0,0) - new Date().setHours(0,0,0,0);
+    const dias = Math.ceil(diffMs / (1000 * 60 * 60 * 24));
 
     let alertaCor = "normal";
-    if (diff <= 15 && diff > 10) alertaCor = "amarelo";
-    else if (diff <= 10 && diff > 5) alertaCor = "laranja";
-    else if (diff <= 5 && diff >= 0) alertaCor = "vermelho";
-    else if (diff < 0) alertaCor = "vencido";
+    if (dias <= 15 && dias > 10) alertaCor = "amarelo";
+    else if (dias <= 10 && dias > 5) alertaCor = "laranja";
+    else if (dias <= 5 && dias >= 0) alertaCor = "vermelho";
+    else if (dias < 0) alertaCor = "vencido";
 
-    // Atualiza cor
-    await updateDoc(doc(db, `lojas/${cfg.loja}/produtos/${id}`), {
-      alertaCor
-    });
+    // Atualiza apenas se diferente
+    if (p.alertaCor !== alertaCor) {
+      await updateDoc(doc(db, `lojas/${cfg.loja}/produtos/${id}`), { alertaCor });
+    }
 
-    // Alerta de 5 dias
-    if (diff === 5 && !p.alert5diasSent) {
-      const msg = `⚠️ *ALERTA DE VALIDADE*\nProduto: *${p.nome}*\nCódigo: ${p.codigo}\nVence em ${diff} dias.`;
-      abrirWhatsAppParaGerente(cfg.whatsGerente, msg);
-
-      await updateDoc(doc(db, `lojas/${cfg.loja}/produtos/${id}`), {
-        alert5diasSent: true,
-        lastAlertAt: new Date()
-      });
+    // Alerta 5 dias (apenas 1 vez)
+    if (dias === 5 && !p.alert5diasSent) {
+      const texto = `⚠️ *ALERTA DE VALIDADE*\nProduto: *${p.nome}*\nCódigo: ${p.codigo}\nLote: ${p.lote}\nVence em ${dias} dias`;
+      abrirWhatsAppParaGerente(cfg.whatsGerente, texto);
+      try {
+        await updateDoc(doc(db, `lojas/${cfg.loja}/produtos/${id}`), { alert5diasSent: true, lastAlertAt: new Date() });
+      } catch (e) {
+        console.error("Erro marcar alert5diasSent:", e);
+      }
     }
   }
 }
 
 /* ============================================================
-   🔵 CARREGAR PRODUTOS NA TELA
+   CARREGAR E EXIBIR
 ============================================================ */
 async function carregarProdutos() {
   const user = auth.currentUser;
   if (!user) return;
 
   const userSnap = await getDoc(doc(db, "usuarios", user.email));
+  if (!userSnap.exists()) {
+    document.getElementById("listaProdutos").innerHTML = "<div class='produto-card'>Usuário sem perfil.</div>";
+    return;
+  }
+
   loja = userSnap.data().loja;
-  cargo = userSnap.data().cargo;
+  cargo = userSnap.data().cargo || "gerente";
 
   const snap = await getDocs(collection(db, `lojas/${loja}/produtos`));
 
-  produtosCarregados = snap.docs
-    .map(docItem => ({ id: docItem.id, ...docItem.data() }))
-    .filter(p => p.status !== "rebaixado");
+  produtosCarregados = snap.docs.map(d => ({ id: d.id, ...d.data() })).filter(p => p.status !== "rebaixado");
 
   exibirLista(produtosCarregados);
 }
 
-/* ============================================================
-   🖼 EXIBIR LISTA
-============================================================ */
 function exibirLista(listaProdutos) {
   const lista = document.getElementById("listaProdutos");
   lista.innerHTML = "";
 
-  if (!listaProdutos.length) {
+  if (!Array.isArray(listaProdutos) || listaProdutos.length === 0) {
     lista.innerHTML = "<div class='produto-card'>Nenhum produto encontrado.</div>";
     return;
   }
@@ -339,7 +341,7 @@ function exibirLista(listaProdutos) {
     const item = document.createElement("div");
     item.className = "produto-card";
 
-    const diff = Math.ceil((new Date(p.dataValidadeISO) - new Date()) / 86400000);
+    const diff = p.dataValidadeISO ? Math.ceil((new Date(p.dataValidadeISO) - new Date()) / 86400000) : 0;
     const cor = diff <= 5 ? "#ff4d4d" :
                 diff <= 10 ? "#ff9f43" :
                 diff <= 15 ? "#ffe66d" : "#4eff9a";
@@ -347,49 +349,56 @@ function exibirLista(listaProdutos) {
     item.innerHTML = `
       <img src="${p.fotoURL || ""}" style="width:70px;height:70px;border-radius:6px;object-fit:cover;" onerror="this.style.display='none'">
       <div style="flex:1;">
-        <strong>${p.nome}</strong><br>
-        ${p.setor}<br>
-        <span style="color:#4eff9a">💲 R$ ${(p.preco ?? 0).toFixed(2).replace('.', ',')}</span><br>
-        Validade: ${p.dataValidadeBR}
+        <strong>${p.nome || "—"}</strong><br>
+        ${p.setor || ""}<br>
+        <span style="color:#4eff9a">💲 R$ ${(Number(p.preco) || 0).toFixed(2).replace('.', ',')}</span><br>
+        Validade: ${p.dataValidadeBR || ""}<br><span style="color:#ffd166">📦 Quantidade: ${p.quantidade ?? 0}</span>
       </div>
     `;
 
     const botoes = document.createElement("div");
     botoes.className = "botoes-container";
 
-    // Botão Whats
+    // WhatsApp
     const btnWhats = document.createElement("button");
     btnWhats.textContent = "🟢 WhatsApp";
     btnWhats.style.background = "#25D366";
     btnWhats.onclick = async () => {
-      const cfg = await getConfigDaLoja();
-      const msg = `⚠️ Rebaixa solicitada%0AProduto: ${p.nome}%0AValidade: ${p.dataValidadeBR}`;
-      window.open(`https://wa.me/55${cfg.whatsResponsavel}?text=${msg}`);
+      try {
+        const cfg = await getConfigDaLoja();
+        const numero = cfg.whatsResponsavel || cfg.whatsGerente || "";
+        if (!numero) return alert("Número do responsável/gerente não configurado.");
+        const msg = `⚠️ Rebaixa solicitada%0AProduto: ${encodeURIComponent(p.nome || "")}%0AValidade: ${encodeURIComponent(p.dataValidadeBR || "")}`;
+        window.open(`https://wa.me/55${numero.replace(/\D/g, "")}?text=${msg}`, "_blank");
+      } catch (e) {
+        console.error("Erro abrir whatsapp:", e);
+        alert("Erro ao buscar contato.");
+      }
     };
     botoes.appendChild(btnWhats);
 
-    // Botão Rebaixar
+    // Rebaixar
     const btnRebaixar = document.createElement("button");
     btnRebaixar.style.background = cor;
     btnRebaixar.textContent = `🔻 Rebaixar (${diff}d)`;
     btnRebaixar.onclick = () => rebaixarProduto(p.id);
     botoes.appendChild(btnRebaixar);
 
-    // Editar / Excluir só para gerente / master
+    // Editar / Excluir
     if (cargo !== "responsavel") {
       const btnEditar = document.createElement("button");
       btnEditar.textContent = "✏️ Editar";
       btnEditar.style.background = "#4d9cff";
-      btnEditar.onclick = () => location.href = `produto.html?id=${p.id}`;
+      btnEditar.onclick = () => location.href = `produto.html?id=${encodeURIComponent(p.id)}`;
       botoes.appendChild(btnEditar);
 
       const btnExcluir = document.createElement("button");
       btnExcluir.textContent = "🗑️ Excluir";
       btnExcluir.style.background = "#ff6b6b";
       btnExcluir.onclick = async () => {
-        if (!confirm(`Excluir ${p.nome}?`)) return;
+        if (!confirm(`Excluir ${p.nome || "produto"}?`)) return;
         await deleteDoc(doc(db, `lojas/${loja}/produtos/${p.id}`));
-        carregarProdutos();
+        await carregarProdutos();
       };
       botoes.appendChild(btnExcluir);
     }
@@ -400,39 +409,115 @@ function exibirLista(listaProdutos) {
 }
 
 /* ============================================================
-   🔍 FILTRO
+   FILTRO
 ============================================================ */
 document.getElementById("busca").addEventListener("input", e => {
   const termo = e.target.value.toLowerCase();
-
   const filtrados = produtosCarregados.filter(p =>
-    p.nome.toLowerCase().includes(termo) ||
-    p.setor.toLowerCase().includes(termo) ||
-    p.codigo?.toLowerCase().includes(termo)
+    (p.nome || "").toLowerCase().includes(termo) ||
+    (p.setor || "").toLowerCase().includes(termo) ||
+    (p.codigo || "").toLowerCase().includes(termo)
   );
-
   exibirLista(filtrados);
 });
 
 /* ============================================================
-   🚀 INICIAR
+   EXPORTAÇÃO XLSX / PDF
+   - exportTela: exporta os produtos atualmente listados (aplica filtro)
+   - exportTudo: busca TODOS os produtos (mesmo os rebaixados) da loja e exporta
+============================================================ */
+
+function produtosParaLinhas(arr) {
+  return arr.map(p => ({
+    Nome: p.nome || "",
+    Codigo: p.codigo || "",
+    Lote: p.lote || "",
+    Setor: p.setor || "",
+    Preco: (Number(p.preco) || 0).toFixed(2).replace('.', ','),
+    Validade: p.dataValidadeBR || "",
+    Status: p.status || "normal"
+  }));
+}
+
+async function exportToXLSX(rows, filename = "produtos.xlsx") {
+  const ws = XLSX.utils.json_to_sheet(rows);
+  const wb = XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb, ws, "Produtos");
+  XLSX.writeFile(wb, filename);
+}
+
+async function exportToPDF(rows, filename = "produtos.pdf") {
+  try {
+    const { jsPDF } = window.jspdf;
+    const docPDF = new jsPDF('p', 'pt', 'a4');
+    const columns = Object.keys(rows[0] || {}).map(k => ({ header: k, dataKey: k }));
+    docPDF.autoTable({
+      head: [columns.map(c => c.header)],
+      body: rows.map(r => Object.values(r)),
+      startY: 40,
+      styles: { fontSize: 9 },
+      headStyles: { fillColor: [0, 200, 255], textColor: 0 }
+    });
+    docPDF.save(filename);
+  } catch (e) {
+    console.error("Erro gerar PDF:", e);
+    alert("Erro ao gerar PDF. Veja console.");
+  }
+}
+
+document.getElementById("exportTela").onclick = async () => {
+  try {
+    // pegar itens atualmente exibidos no DOM (aplica filtro)
+    // use produtosCarregados filtrados pelo campo busca
+    const termo = document.getElementById("busca").value.toLowerCase();
+    const visiveis = produtosCarregados.filter(p =>
+      (p.nome || "").toLowerCase().includes(termo) ||
+      (p.setor || "").toLowerCase().includes(termo) ||
+      (p.codigo || "").toLowerCase().includes(termo)
+    );
+
+    if (visiveis.length === 0) return alert("Nenhum produto visível para exportar.");
+
+    const linhas = produtosParaLinhas(visiveis);
+    // baixa XLSX e PDF (duas opções)
+    await exportToXLSX(linhas, `produtos_tela_${new Date().toISOString().slice(0,10)}.xlsx`);
+    await exportToPDF(linhas, `produtos_tela_${new Date().toISOString().slice(0,10)}.pdf`);
+  } catch (e) {
+    console.error("Erro exportTela:", e);
+    alert("Erro ao exportar. Veja console.");
+  }
+};
+
+document.getElementById("exportTudo").onclick = async () => {
+  try {
+    const cfg = await getConfigDaLoja();
+    if (!cfg || !cfg.loja) return alert("Loja não identificada.");
+
+    const snap = await getDocs(collection(db, `lojas/${cfg.loja}/produtos`));
+    const todos = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+    if (todos.length === 0) return alert("Nenhum produto encontrado na loja.");
+
+    const linhas = produtosParaLinhas(todos);
+    await exportToXLSX(linhas, `produtos_tudo_${cfg.loja}_${new Date().toISOString().slice(0,10)}.xlsx`);
+    await exportToPDF(linhas, `produtos_tudo_${cfg.loja}_${new Date().toISOString().slice(0,10)}.pdf`);
+  } catch (e) {
+    console.error("Erro exportTudo:", e);
+    alert("Erro ao exportar tudo. Veja console.");
+  }
+};
+
+/* ============================================================
+   INICIALIZAÇÃO (autorização)
 ============================================================ */
 onAuthStateChanged(auth, user => {
   if (!user) return;
-
-  carregarProdutos();
-
-  // Rodar alertas 5 dias
-  setTimeout(() => {
-    verificarAlertasDeValidade().catch(console.error);
-  }, 1500);
+  carregarProdutos().catch(console.error);
+  setTimeout(() => verificarAlertasDeValidade().catch(console.error), 1500);
 });
-
 </script>
 
-
 <script>
-
+/* hamburger */
 const sidebar = document.querySelector('.sidebar');
 let hamburgerBtn = document.querySelector('.hamburger');
 
@@ -447,7 +532,6 @@ hamburgerBtn.onclick = () => {
   sidebar.classList.toggle('open');
 };
 </script>
-
 
 </body>
 </html>

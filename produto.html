@@ -95,6 +95,9 @@ body { font-family: 'Poppins', sans-serif; }
     <label>Preço</label>
     <input type="text" id="preco" required placeholder="0,00">
 
+    <label>Quantidade</label>
+    <input type="number" id="quantidade" required placeholder="0">
+
     <label>Setor</label>
     <select id="setor" required>
         <option value="Mercearia">Mercearia</option>
@@ -283,6 +286,7 @@ onAuthStateChanged(auth,async user=>{
       precoEl.value=p.preco;
       setorEl.value=p.setor;
       validadeEl.value=p.dataValidadeISO;
+      document.getElementById("quantidade").value = p.quantidade ?? 0;
       if(p.fotoURL){
         previewEl.src=p.fotoURL;
         previewEl.style.display="block";
@@ -299,11 +303,16 @@ document.getElementById("btnSalvar").onclick=async()=>{
   const codigo=codigoEl.value.trim();
   const lote=loteEl.value.trim();
   const preco=parsePrice(precoEl.value);
+  const quantidade = Number(document.getElementById("quantidade").value);
   const setor=setorEl.value;
   const iso=validadeEl.value;
 
   if(!nome||!codigo||!lote||!iso){alert("Preencha todos os campos.");return;}
 
+  if (!quantidade && quantidade !== 0) {
+    alert("Informe a quantidade.");
+    return;
+}
   const id=produtoId||crypto.randomUUID();
   let fotoURL="";
 
@@ -317,7 +326,7 @@ document.getElementById("btnSalvar").onclick=async()=>{
   }
 
   await setDoc(doc(db,`lojas/${lojaAtual}/produtos/${id}`),{
-    nome,codigo,lote,preco,setor,
+    nome,codigo,lote,preco,quantidade,setor,
     dataValidadeISO:iso,
     dataValidadeBR:convBR(iso),
     fotoURL,

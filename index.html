@@ -155,6 +155,7 @@
   const auth = getAuth(app);
   const db = getFirestore(app);
 
+  // Mapeamento automático da loja por email
   const lojaPorGerente = {
     "cd@supernovacidade.com": "loja_cd_cidade",
     "novacidade@supernovacidade.com": "loja_cidade",
@@ -166,7 +167,7 @@
     "master@supernovacidade.com": "master"
   };
 
-  document.getElementById("loginForm").addEventListener("submit", async (e)=> {
+  document.getElementById("loginForm").addEventListener("submit", async (e) => {
     e.preventDefault();
 
     const email = document.getElementById("email").value.trim().toLowerCase();
@@ -176,6 +177,7 @@
     errorEl.textContent = "";
 
     try {
+      // LOGIN
       await signInWithEmailAndPassword(auth, email, senha);
 
       const ref = doc(db, "usuarios", email);
@@ -184,24 +186,34 @@
       let loja, cargo;
 
       if (snap.exists()) {
+        // Usuário já existe e já tem dados
         loja = snap.data().loja;
-        cargo = snap.data().gerentes;
-      } else {
-        loja = prompt("Digite o código da loja (ex: loja_manoa):");
-        cargo = "gerente";
+        cargo = snap.data().cargo || "gerente";
 
-        await setDoc(ref, { email, loja, gerentes: cargo }, { merge:true });
+      } else {
+        // Se o usuário não existe na coleção "usuarios"
+        // Vamos criar automaticamente — MAS sem prompt
+        loja = lojaPorGerente[email] || "nao_definida";
+        cargo = email === "master@supernovacidade.com" ? "master" : "gerente";
+
+        await setDoc(ref, { email, loja, cargo }, { merge: true });
       }
 
+      // salvar dados localmente
       localStorage.setItem("usuarioLogado", email);
+      localStorage.setItem("cargo", cargo);
+      localStorage.setItem("loja", loja);
+
+      // Login simples → sempre vai ao dashboard
       window.location.href = "dashboard.html";
 
     } catch (e) {
+      console.log(e);
       errorEl.textContent = "Email ou senha incorretos.";
     }
   });
-
 </script>
+
 
 <script>
 // Partículas

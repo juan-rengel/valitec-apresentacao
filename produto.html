@@ -337,14 +337,18 @@ document.getElementById("btnSalvar").onclick=async()=>{
   const id=produtoId||crypto.randomUUID();
   let fotoURL="";
 
-  if(fotoBlob){
-    const refImg=ref(storage,`produtos/${lojaAtual}/${id}.jpg`);
-    await uploadBytes(refImg,fotoBlob);
-    fotoURL=await getDownloadURL(refImg);
-  }else if(produtoId){
-    let s=await getDoc(doc(db,`lojas/${lojaAtual}/produtos/${produtoId}`));
-    fotoURL=s.data().fotoURL||"";
-  }
+// Sempre tenta enviar foto se existir
+if (fotoBlob) {
+    const refImg = ref(storage, `produtos/${lojaAtual}/${id}.jpg`);
+    await uploadBytes(refImg, fotoBlob);
+    fotoURL = await getDownloadURL(refImg);
+} else {
+    // Pega a foto antiga se não tirou nova
+    if (produtoId) {
+        let s = await getDoc(doc(db, `lojas/${lojaAtual}/produtos/${produtoId}`));
+        fotoURL = s.data().fotoURL || "";
+    }
+}
 
   await setDoc(doc(db,`lojas/${lojaAtual}/produtos/${id}`),{
     nome,codigo,lote,preco,quantidade,setor,

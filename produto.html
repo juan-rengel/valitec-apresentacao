@@ -249,15 +249,28 @@ btnOpenCamera.onclick=async()=>{
   }catch(e){alert("Erro câmera.");}
 };
 
-btnCapturar.onclick=async()=>{
-  const c=document.createElement("canvas");
-  c.width=cameraPreview.videoWidth;
-  c.height=cameraPreview.videoHeight;
-  c.getContext("2d").drawImage(cameraPreview,0,0);
-  const dataURL=c.toDataURL("image/jpeg");
-  previewEl.src=dataURL;
-  previewEl.style.display="block";
-  fotoBlob=await (await fetch(dataURL)).blob();
+btnCapturar.onclick = async () => {
+
+  if (cameraPreview.readyState < 2) {
+      alert("Aguarde 1 segundo a câmera carregar.");
+      return;
+  }
+
+  const canvas = document.createElement("canvas");
+  canvas.width = cameraPreview.videoWidth;
+  canvas.height = cameraPreview.videoHeight;
+
+  const ctx = canvas.getContext("2d");
+  ctx.drawImage(cameraPreview, 0, 0, canvas.width, canvas.height);
+
+  const dataURL = canvas.toDataURL("image/jpeg", 0.9);
+
+  previewEl.src = dataURL;
+  previewEl.style.display = "block";
+
+  fotoBlob = await (await fetch(dataURL)).blob();
+
+  console.log("Foto capturada:", fotoBlob);
 };
 
 /* === ARQUIVO === */

@@ -434,6 +434,7 @@ function produtosParaLinhas(arr) {
     Lote: p.lote || "",
     Setor: p.setor || "",
     Preco: (Number(p.preco) || 0).toFixed(2).replace('.', ','),
+    Quantidade: p.quantidade ?? 0,      // ✅ ADICIONADO
     Validade: p.dataValidadeBR || "",
     Status: p.status || "normal"
   }));

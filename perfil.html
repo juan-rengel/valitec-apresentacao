@@ -1,0 +1,211 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>ValiTec MJ — Perfil</title>
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;500;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="dashboard.css">
+</head>
+<body>
+  <canvas id="particleCanvas"></canvas>
+
+  <div class="app-container">
+    <aside class="sidebar">
+      <h1> <br></h1>
+      <nav>
+        <a href="dashboard.html">Painel</a>
+        <a href="produto.html">
+            cadastrar produtos
+        </a>
+        <a href="Lista-produtos.html">Lista de produtos</a>
+        <a href="Lista-rebaixados.html">Produtos Rebaixados</a>
+        <a href="calendario.html">Calendario</a>
+        <a href="#" class="active">Perfil</a>
+        <a href="cadastro-usuarios.html">Cadastrar Usuários</a>
+        <a href="relatorios.html">Relatórios</a>
+        <a href="#" onclick="localStorage.clear(); location.href='index.html'">Sair</a>
+      </nav>
+    </aside>
+
+ <main class="main fade-in">
+  <h2 class="page-title">Configurações do Perfil</h2>
+
+  <form id="formPerfil" class="perfil-box">
+    <label>WhatsApp do Gerente</label>
+<input type="text" id="whatsGerente" placeholder="Ex: 92988001122">
+
+<label>WhatsApp do Responsável pela Rebaixa</label>
+<input type="text" id="whatsResponsavel" placeholder="Ex: 92991234567">
+
+    <button id="salvarPerfil" class="btn-primary">💾 Salvar Alterações</button>
+  </form>
+</main>
+  </div>
+
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
+import { getFirestore, setDoc, doc, getDoc } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
+
+const firebaseConfig = {
+  apiKey: "AIzaSyDPIlkTLbaeUiuvfvijWf5fofREw5oE8ic",
+  authDomain: "valitec-mj.firebaseapp.com",
+  projectId: "valitec-mj",
+  storageBucket: "valitec-mj.firebasestorage.app",
+  messagingSenderId: "616592039657",
+  appId: "1:616592039657:web:3827a890474111be85da78"
+};
+
+const app = initializeApp(firebaseConfig);
+const db = getFirestore(app);
+const auth = getAuth(app);
+
+let lojaAtual = null;
+let usuarioAtual = null;
+
+// ✅ Identifica usuário e carrega loja
+onAuthStateChanged(auth, async (user) => {
+  if (!user) return;
+  usuarioAtual = user.email;
+
+  const userSnap = await getDoc(doc(db, "usuarios", user.email));
+  lojaAtual = userSnap.data().loja;
+
+  const confSnap = await getDoc(doc(db, `lojas/${lojaAtual}/config/geral`));
+  if (confSnap.exists()) {
+    document.getElementById("whatsGerente").value = confSnap.data().whatsGerente || "";
+    document.getElementById("whatsResponsavel").value = confSnap.data().whatsResponsavel || "";
+  }
+});
+
+// ✅ Salvar alterações
+document.getElementById("salvarPerfil").onclick = async (e) => {
+  e.preventDefault();
+
+  const whatsGerente = document.getElementById("whatsGerente").value.replace(/\D/g, "");
+  const whatsResponsavel = document.getElementById("whatsResponsavel").value.replace(/\D/g, "");
+
+  if (!lojaAtual) return alert("⚠️ Não foi possível identificar sua loja.");
+
+  await setDoc(doc(db, `lojas/${lojaAtual}/config/geral`), {
+    whatsGerente,
+    whatsResponsavel
+  }, { merge: true });
+
+  // ✅ Também salva para facilitar leitura em outras telas
+  await setDoc(doc(db, "gerentes", usuarioAtual), {
+    whatsGerente,
+    whatsResponsavel
+  }, { merge: true });
+
+  alert("✅ Configurações salvas com sucesso!");
+};
+</script>
+
+<script>
+const canvas = document.getElementById("particleCanvas");
+const ctx = canvas.getContext("2d");
+
+let particles = [];
+let w, h;
+
+function resize() {
+  w = canvas.width = window.innerWidth;
+  h = canvas.height = window.innerHeight;
+}
+window.addEventListener("resize", resize);
+resize();
+
+// Criar partículas
+for (let i = 0; i < 60; i++) {
+  particles.push({
+    x: Math.random() * w,
+    y: Math.random() * h,
+    r: Math.random() * 2 + 1,
+    dx: (Math.random() - 0.5) * 0.4,
+    dy: (Math.random() - 0.5) * 0.4
+  });
+}
+
+function draw() {
+  ctx.clearRect(0, 0, w, h);
+  ctx.fillStyle = "rgba(0, 200, 255, 0.35)";
+
+  particles.forEach(p => {
+    ctx.beginPath();
+    ctx.arc(p.x, p.y, p.r, 0, Math.PI * 2);
+    ctx.fill();
+  });
+
+  connectParticles();
+  updateParticles();
+  requestAnimationFrame(draw);
+}
+
+function updateParticles() {
+  particles.forEach(p => {
+    p.x += p.dx;
+    p.y += p.dy;
+
+    if (p.x < 0 || p.x > w) p.dx *= -1;
+    if (p.y < 0 || p.y > h) p.dy *= -1;
+  });
+}
+
+function connectParticles() {
+  ctx.strokeStyle = "rgba(0, 200, 255, 0.10)";
+  ctx.lineWidth = 1;
+
+  for (let i = 0; i < particles.length; i++) {
+    for (let j = i + 1; j < particles.length; j++) {
+      let dist = Math.hypot(particles[i].x - particles[j].x, particles[i].y - particles[j].y);
+      if (dist < 130) {
+        ctx.globalAlpha = 1 - dist / 130;
+        ctx.beginPath();
+        ctx.moveTo(particles[i].x, particles[i].y);
+        ctx.lineTo(particles[j].x, particles[j].y);
+        ctx.stroke();
+      }
+    }
+  }
+  ctx.globalAlpha = 1;
+}
+
+draw();
+</script>
+<script>
+// --- Menu Hambúrguer --- //
+const sidebar = document.querySelector('.sidebar');
+const hamburger = document.createElement('button');
+hamburger.className = 'hamburger';
+hamburger.textContent = '☰';
+hamburger.onclick = () => sidebar.classList.toggle('open');
+document.body.appendChild(hamburger);
+</script>
+<button id="toggleTheme" class="theme-toggle">🌙</button>
+<script>
+const toggle = document.getElementById("toggleTheme");
+
+function aplicarTema() {
+  const tema = localStorage.getItem("temaValitec") || "dark";
+  if (tema === "light") {
+    document.documentElement.classList.add("light-mode");
+    toggle.textContent = "🌙";
+  } else {
+    document.documentElement.classList.remove("light-mode");
+    toggle.textContent = "🔆";
+  }
+}
+
+toggle.onclick = () => {
+  const atual = localStorage.getItem("temaValitec") || "dark";
+  const novo = (atual === "dark") ? "light" : "dark";
+  localStorage.setItem("temaValitec", novo);
+  aplicarTema();
+};
+
+aplicarTema();
+</script>
+</body>
+</html>

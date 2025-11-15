@@ -1,0 +1,196 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>ValiTec MJ — Produtos Rebaixados</title>
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;500;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="dashboard.css">
+</head>
+<body>
+  <canvas id="particleCanvas"></canvas>
+
+  <div class="app-container">
+    <aside class="sidebar">
+      <h1></h1>
+      <nav>
+        <a href="dashboard.html">Painel</a>
+        <a href="produto.html">Cadastrar Produto</a>
+        <a href="Lista-produtos.html">Lista de Produtos</a>
+        <a href="Lista-rebaixados.html" class="active">Produtos Rebaixados</a>
+        <a href="calendario.html">Calendário</a>
+        <a href="perfil.html">Perfil</a>
+        <a href="cadastro-usuarios.html">Cadastrar Usuários</a>
+        <a href="relatorios.html">Relatórios</a>
+        <a href="#" onclick="localStorage.clear(); location.href='index.html'">Sair</a>
+      </nav>
+    </aside>
+
+    <main class="main fade-in">
+      <h2 class="page-title">Produtos Rebaixados</h2>
+
+      <input type="text" id="buscaRebaixado" class="input-busca" placeholder="🔍 Buscar produto...">
+
+      <div id="listaRebaixados" class="lista-produtos"></div>
+    </main>
+  </div>
+
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
+import { getFirestore, collection, query, where, getDocs, doc, getDoc, updateDoc, deleteDoc } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+import { getAuth } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
+
+const firebaseConfig = {
+  apiKey: "AIzaSyDPIlkTLbaeUiuvfvijWf5fofREw5oE8ic",
+  authDomain: "valitec-mj.firebaseapp.com",
+  projectId: "valitec-mj",
+  storageBucket: "valitec-mj.firebasestorage.app",
+  messagingSenderId: "616592039657",
+  appId: "1:616592039657:web:3827a890474111be85da78"
+};
+
+const app = initializeApp(firebaseConfig);
+const db = getFirestore(app);
+const auth = getAuth(app);
+
+let itens = [];
+
+async function carregarRebaixados() {
+  const user = auth.currentUser;
+  if (!user) return;
+
+  const userSnap = await getDoc(doc(db, "usuarios", user.email));
+  const loja = userSnap.data().loja;
+
+  const q = query(collection(db, `lojas/${loja}/produtos`), where("status", "==", "rebaixado"));
+  const snap = await getDocs(q);
+
+  itens = [];
+  snap.forEach(d => itens.push({ id: d.id, ...d.data(), loja }));
+
+  exibirLista(itens);
+}
+
+function exibirLista(lista) {
+  const div = document.getElementById("listaRebaixados");
+  div.innerHTML = "";
+
+  lista.forEach(p => {
+    const card = document.createElement("div");
+    card.className = "produto-card";
+    card.style.border = "1px solid #4eff9a";
+
+    card.innerHTML = `
+      <img src="${p.fotoURL}" style="width:70px;border-radius:6px;" onerror="this.style.display='none'">
+      <div style="flex:1;">
+        <strong>${p.nome}</strong><br>
+        ${p.setor}<br>
+        💲 <b>Preço:</b> R$ ${(p.preco ?? 0).toFixed(2).replace('.', ',')}<br>
+        Validade: ${p.dataValidadeBR}<br>
+        <span style="color:#4eff9a;font-weight:bold;">✅ REBAIXADO</span>
+      </div>
+    `;
+// BOTÃO REVERTER
+const btnReverter = document.createElement("button");
+btnReverter.textContent = "↩️ Reverter";
+btnReverter.className = "btnEdit";
+btnReverter.style.background = "#4eff9a";
+btnReverter.style.color = "#000";
+btnReverter.style.fontWeight = "600";
+btnReverter.style.borderRadius = "6px";
+
+btnReverter.onclick = async () => {
+  const confSnap = await getDoc(doc(db, `lojas/${p.loja}/config/geral`));
+  const whatsGerente = confSnap.exists() ? confSnap.data().whatsGerente : null;
+
+  // REVERTE O PRODUTO NO FIRESTORE
+  await updateDoc(doc(db, `lojas/${p.loja}/produtos/${p.id}`), {
+    status: "normal",
+    revertidoAt: new Date()
+  });
+
+  // ENVIA WHATSAPP
+  if (whatsGerente) {
+    const msg = `
+↩️ *REVERÇÃO DE REBAIXA*
+
+📦 *${p.nome}*
+🏷️ Setor: ${p.setor}
+🔖 Lote: ${p.lote}
+💲 Preço: R$ ${(p.preco ?? 0).toFixed(2).replace('.', ',')}
+📅 Validade: ${p.dataValidadeBR}
+    `;
+    window.open(`https://wa.me/55${whatsGerente}?text=${encodeURIComponent(msg)}`);
+  }
+
+  // RECARREGA A LISTA
+  carregarRebaixados();
+};
+    // BOTÃO EXCLUIR
+    const btnExcluir = document.createElement("button");
+    btnExcluir.textContent = "🗑️ Excluir";
+    btnExcluir.className = "btnDelete";
+    btnExcluir.style.background = "#ff5c5c";
+    btnExcluir.style.color = "#000";
+
+    btnExcluir.onclick = async () => {
+      if (confirm(`Excluir definitivamente ${p.nome}?`)) {
+        await deleteDoc(doc(db, `lojas/${p.loja}/produtos/${p.id}`));
+        carregarRebaixados();
+      }
+    };
+
+    card.appendChild(btnReverter);
+    card.appendChild(btnExcluir);
+    div.appendChild(card);
+  });
+}
+
+// FILTRO
+document.getElementById("buscaRebaixado").addEventListener("input", e => {
+  const termo = e.target.value.toLowerCase();
+  exibirLista(itens.filter(p =>
+    p.nome.toLowerCase().includes(termo) ||
+    p.setor.toLowerCase().includes(termo) ||
+    (p.preco + "").includes(termo)
+  ));
+});
+
+auth.onAuthStateChanged(carregarRebaixados);
+</script>
+
+<script>
+const sidebar = document.querySelector('.sidebar');
+const hamburger = document.createElement('button');
+hamburger.className = 'hamburger';
+hamburger.textContent = '☰';
+hamburger.onclick = () => sidebar.classList.toggle('open');
+document.body.appendChild(hamburger);
+</script>
+
+<button id="toggleTheme" class="theme-toggle">🌙</button>
+<script>
+const toggle = document.getElementById("toggleTheme");
+
+function aplicarTema() {
+  const tema = localStorage.getItem("temaValitec") || "dark";
+  if (tema === "light") {
+    document.documentElement.classList.add("light-mode");
+    toggle.textContent = "🌙";
+  } else {
+    document.documentElement.classList.remove("light-mode");
+    toggle.textContent = "🔆";
+  }
+}
+
+toggle.onclick = () => {
+  const atual = localStorage.getItem("temaValitec") || "dark";
+  const novo = (atual === "dark") ? "light" : "dark";
+  localStorage.setItem("temaValitec", novo);
+  aplicarTema();
+};
+
+aplicarTema();
+</script>
+</body>
+</html>

@@ -1,0 +1,541 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>ValiTec MJ — Lista de Produtos</title>
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;500;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="dashboard.css">
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.26/jspdf.plugin.autotable.min.js"></script>
+
+<style>
+/* Ajuste para caber na tela do celular (card compacto) */
+.produto-card {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 10px;
+  border-radius: 10px;
+  background: rgba(255,255,255,0.05);
+  backdrop-filter: blur(6px);
+}
+
+.produto-card img {
+  width: 60px;
+  height: 60px;
+  object-fit: cover;
+  border-radius: 6px;
+}
+
+/* GRID DOS BOTÕES 2x2 mais compacto */
+.botoes-container {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 6px;
+  width: 100%;
+  margin-top: 6px;
+}
+
+.botoes-container button,
+.botoes-container a {
+  width: 100%;
+  padding: 6px 8px;   /* reduzido */
+  font-size: 12px;    /* reduzido */
+  border-radius: 6px;
+  white-space: nowrap;
+  text-align: center;
+  border: none;
+  cursor: pointer;
+}
+
+/* melhorar texto em telas pequenas */
+.produto-card strong {
+  font-size: 14px;
+}
+
+.produto-card span,
+.produto-card div {
+  font-size: 12px;
+}
+
+/* Força bom encaixe no celular */
+@media (max-width: 480px) {
+  .produto-card {
+    padding: 8px;
+  }
+  .produto-card img {
+    width: 55px;
+    height: 55px;
+  }
+  .botoes-container button,
+  .botoes-container a {
+    font-size: 11px;
+    padding: 6px;
+  }
+}
+
+/* MENU HAMBÚRGUER FIXO E FUNCIONAL */
+.sidebar {
+  position: fixed;
+  left: -260px;
+  top: 0;
+  width: 260px;
+  height: 100vh;
+  transition: 0.3s ease;
+  z-index: 9999;
+}
+
+.sidebar.open {
+  left: 0;
+}
+
+.hamburger {
+  position: fixed;
+  top: 15px;
+  left: 15px;
+  font-size: 28px;
+  background: var(--accent);
+  color: #fff;
+  border: none;
+  border-radius: 6px;
+  padding: 6px 12px;
+  cursor: pointer;
+  z-index: 10000;
+}
+
+@media(max-width: 900px) {
+  .app-container {
+    margin-left: 0 !important;
+  }
+
+
+}
+.app-container {
+ max-width: 700px;
+ margin: auto;
+  }
+
+</style>
+</head>
+<body>
+  <canvas id="particleCanvas"></canvas>
+
+  <div class="app-container">
+    <aside class="sidebar">
+      <h1></h1>
+      <nav>
+        <a href="dashboard.html">Painel</a>
+        <a href="produto.html">Cadastrar Produtos</a>
+        <a href="#" class="active">Lista de Produtos</a>
+        <a href="Lista-rebaixados.html">Produtos Rebaixados</a>
+        <a href="calendario.html">Calendário</a>
+        <a href="perfil.html">Perfil</a>
+        <a href="cadastro-usuarios.html">Cadastrar Usuários</a>
+        <a href="relatorios.html">Relatórios</a>
+        <a href="#" onclick="localStorage.clear(); location.href='index.html'">Sair</a>
+      </nav>
+    </aside>
+
+    <main class="main fade-in">
+      <h2 class="page-title">Lista de Produtos</h2>
+      <input type="text" id="busca" class="input-busca" placeholder="🔍 Buscar por nome, setor, código...">
+
+      <div class="export-container">
+        <button id="exportTela" class="btnExport">📄 Exportar Tela (PDF/Excel)</button>
+        <button id="exportTudo" class="btnExport">🗂 Exportar Tudo (PDF/Excel)</button>
+      </div>
+
+      <div id="listaProdutos" class="lista-produtos"></div>
+    </main>
+  </div>
+
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
+import { getFirestore, collection, getDocs, getDoc, doc, updateDoc, deleteDoc } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
+
+let loja = null;
+let cargo = null;
+let produtosCarregados = [];
+let produtosCarregadosFiltrados = [];
+
+const firebaseConfig = {
+  apiKey: "AIzaSyDPIlkTLbaeUiuvfvijWf5fofREw5oE8ic",
+  authDomain: "valitec-mj.firebaseapp.com",
+  projectId: "valitec-mj",
+  storageBucket: "valitec-mj.firebasestorage.app",
+  messagingSenderId: "616592039657",
+  appId: "1:616592039657:web:3827a890474111be85da78"
+};
+
+const app = initializeApp(firebaseConfig);
+const db = getFirestore(app);
+const auth = getAuth(app);
+
+async function carregarProdutos() {
+  const user = auth.currentUser;
+  if (!user) return;
+
+  const userSnap = await getDoc(doc(db, "usuarios", user.email));
+  if (!userSnap.exists()) {
+    listaProdutos.innerHTML = "<div class='produto-card'>Usuário sem perfil.</div>";
+    return;
+  }
+
+  loja = userSnap.data().loja;
+  cargo = userSnap.data().cargo;
+
+  const snap = await getDocs(collection(db, `lojas/${loja}/produtos`));
+
+  produtosCarregados = [];
+  snap.forEach(docItem => {
+    const p = docItem.data();
+    if (p.status === "rebaixado") return;
+    produtosCarregados.push({ id: docItem.id, ...p });
+  });
+
+  exibirLista(produtosCarregados);
+}
+
+function exibirLista(listaProdutos) {
+  const lista = document.getElementById('listaProdutos');
+  lista.innerHTML = '';
+
+  if (!listaProdutos.length) {
+    lista.innerHTML = "<div class='produto-card'>Nenhum produto encontrado.</div>";
+    return;
+  }
+
+  listaProdutos.forEach(p => {
+    const item = document.createElement('div');
+    item.className = 'produto-card';
+
+    const fotoSrc = p.fotoURL || "";
+    item.innerHTML = `
+      <img src="${fotoSrc}" style="width:70px;height:70px;object-fit:cover;border-radius:6px;" onerror="this.style.display='none'">
+      <div style="flex:1;">
+        <strong>${p.nome}</strong><br>
+        ${p.setor}<br>
+        <span style='color:#4eff9a'>💲 R$ ${(p.preco ?? 0).toFixed(2).replace('.', ',')}</span><br>
+        Validade: ${p.dataValidadeBR}
+      </div>
+    `;
+
+    const botoes = document.createElement("div");
+    botoes.className = "botoes-container";
+
+    // WHATSAPP
+    const btnWhats = document.createElement("button");
+    btnWhats.textContent = "🟢 WhatsApp";
+    btnWhats.style.background = "#25D366";
+    btnWhats.onclick = async () => {
+      const perfil = await getDoc(doc(db, "gerentes", auth.currentUser.email));
+      const numero = perfil.data()?.whatsResponsavel || "";
+      const msg = `⚠️ Rebaixa solicitada%0AProduto: ${p.nome}%0AValidade: ${p.dataValidadeBR}`;
+      window.open(`https://wa.me/55${numero}?text=${msg}`);
+    };
+    botoes.appendChild(btnWhats);
+
+    // REBAIXAR
+    const diff = Math.ceil((new Date(p.dataValidadeISO) - new Date()) / 86400000);
+    const cor = diff <= 5 ? "#ff4d4d" : diff <= 10 ? "#ff9f43" : diff <= 15 ? "#ffe66d" : "#4eff9a";
+
+ const btnConfirm = document.createElement("button");
+btnConfirm.textContent = `🔻 Rebaixar (${diff}d)`;
+btnConfirm.style.background = cor;
+btnConfirm.setAttribute("onclick", `rebaixarProduto('${p.id}')`);
+botoes.appendChild(btnConfirm);
+
+    // EDITAR
+    if (cargo !== "responsavel") {
+      const btnEditar = document.createElement("button");
+      btnEditar.textContent = "✏️ Editar";
+      btnEditar.style.background = "#4d9cff";
+      btnEditar.onclick = () => location.href = `produto.html?id=${p.id}`;
+      botoes.appendChild(btnEditar);
+
+      // EXCLUIR
+      const btnExcluir = document.createElement("button");
+      btnExcluir.textContent = "🗑️ Excluir";
+      btnExcluir.style.background = "#ff6b6b";
+      btnExcluir.onclick = async () => {
+        if (!confirm(`Excluir ${p.nome}?`)) return;
+        await deleteDoc(doc(db, `lojas/${loja}/produtos/${p.id}`));
+        carregarProdutos();
+      };
+      botoes.appendChild(btnExcluir);
+    }
+
+    item.appendChild(botoes);
+    lista.appendChild(item);
+  });
+}
+
+// FILTRO
+busca.addEventListener("input", e => {
+  const termo = e.target.value.toLowerCase();
+  produtosCarregadosFiltrados = produtosCarregados.filter(p =>
+    p.nome.toLowerCase().includes(termo) ||
+    p.setor.toLowerCase().includes(termo) ||
+    p.codigo.toLowerCase().includes(termo)
+  );
+  exibirLista(produtosCarregadosFiltrados);
+});
+
+onAuthStateChanged(auth, carregarProdutos);
+</script>
+<script>
+// CORRIGIR BOTÃO HAMBÚRGUER
+const sidebar = document.querySelector('.sidebar');
+let hamburgerBtn = document.querySelector('.hamburger');
+
+if (!hamburgerBtn) {
+  hamburgerBtn = document.createElement('button');
+  hamburgerBtn.className = 'hamburger';
+  hamburgerBtn.textContent = '☰';
+  document.body.appendChild(hamburgerBtn);
+}
+
+hamburgerBtn.onclick = () => {
+  sidebar.classList.toggle('open');
+};
+</script>
+
+<script type="module">
+import { getFirestore, collection, getDocs, doc, updateDoc } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+import { getAuth } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
+
+const db = getFirestore();
+const auth = getAuth();
+
+async function verificarVencimentos() {
+
+  const user = auth.currentUser;
+  if (!user) return;
+
+  // Buscar loja do usuário
+  const snapUser = await getDoc(doc(db, "usuarios", user.email));
+  const loja = snapUser.data().loja;
+
+  const ref = collection(db, `lojas/${loja}/produtos`);
+  const snap = await getDocs(ref);
+
+  const hoje = new Date();
+  
+  snap.forEach(async (prod) => {
+
+    const p = prod.data();
+    const id = prod.id;
+
+    if (!p.dataValidadeISO) return;
+
+    const validade = new Date(p.dataValidadeISO);
+    const diff = Math.ceil( (validade - hoje) / (1000 * 60 * 60 * 24) );
+
+    // Já está rebaixado? Não enviar alerta
+    if (p.status === "rebaixado") return;
+
+    let novaCor = "normal";
+
+    if (diff <= 15 && diff > 10) novaCor = "amarelo";
+    else if (diff <= 10 && diff > 5) novaCor = "laranja";
+    else if (diff <= 5 && diff >= 0) novaCor = "vermelho";
+    else if (diff < 0) novaCor = "vencido";
+
+    await updateDoc(doc(db, `lojas/${loja}/produtos/${id}`), {
+      alertaCor: novaCor
+    });
+
+    // ALERTA AUTOMÁTICO - 5 DIAS
+    if (diff <= 5 && p.status !== "rebaixado") {
+      
+      const numeroResponsavel = p.responsavelWhatsapp || "55XXXXXXXXXXX";
+
+      const mensagem = `⚠️ *ALERTA DE VALIDADE*\n` +
+        `O produto *${p.nome}* (código ${p.codigo}) vence em ${diff} dias.\n\n` +
+        `Favor verificar e rebaixar se necessário.`;
+
+      window.open(
+        `https://api.whatsapp.com/send?phone=${numeroResponsavel}&text=${encodeURIComponent(mensagem)}`,
+        "_blank"
+      );
+    }
+
+  });
+}
+
+// Roda automaticamente ao abrir a página
+setTimeout(() => verificarVencimentos(), 2000);
+</script>
+
+<script type="module">
+/*
+  Script: Verificação 5 dias + Rebaixar/Reverter + WhatsApp notificações
+  Colocar em Lista-produtos.html antes de </body>.
+*/
+
+import { getFirestore, collection, getDocs, doc, updateDoc, getDoc } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
+
+const db = getFirestore();
+const auth = getAuth();
+
+// --- UTIL: abre WhatsApp (responsável -> gerente) ---
+function abrirWhatsAppParaGerente(numeroGerente, texto) {
+  if (!numeroGerente) return;
+  // garante apenas dígitos
+  const tel = numeroGerente.replace(/\D/g, "");
+  const url = `https://api.whatsapp.com/send?phone=${tel}&text=${encodeURIComponent(texto)}`;
+  window.open(url, "_blank");
+}
+
+// --- BUSCA config (whatsGerente e whatsResponsavel) para a loja do usuário ---
+async function getConfigDaLoja() {
+  const user = auth.currentUser;
+  if (!user) return null;
+  // busca loja do usuário
+  const userSnap = await getDoc(doc(db, "usuarios", user.email));
+  if (!userSnap.exists()) return null;
+  const loja = userSnap.data().loja;
+  const confSnap = await getDoc(doc(db, `lojas/${loja}/config/geral`));
+  if (!confSnap.exists()) return { loja, whatsGerente: null, whatsResponsavel: null };
+  const cfg = confSnap.data();
+  return { loja, whatsGerente: cfg.whatsGerente || "", whatsResponsavel: cfg.whatsResponsavel || "" };
+}
+
+// --- Verifica produtos e envia alerta 5 dias (apenas 1 vez por produto) ---
+async function verificarAlertasDeValidade() {
+  const cfg = await getConfigDaLoja();
+  if (!cfg || !cfg.loja) return;
+
+  const ref = collection(db, `lojas/${cfg.loja}/produtos`);
+  const snap = await getDocs(ref);
+  const hoje = new Date();
+
+  for (const docSnap of snap.docs) {
+    const p = docSnap.data();
+    const id = docSnap.id;
+
+    // precisa dataValidadeISO e não estar rebaixado
+    if (!p.dataValidadeISO) continue;
+    if (p.status === "rebaixado") continue;
+
+    // calcula diferença em dias (data - hoje)
+    const validade = new Date(p.dataValidadeISO);
+    const diffMs = validade.setHours(0,0,0,0) - new Date().setHours(0,0,0,0);
+    const dias = Math.ceil(diffMs / (1000 * 60 * 60 * 24));
+
+    // quando chegar em 5 dias e não tiver sido notificado antes
+    if (dias === 5 && !p.alert5diasSent) {
+      // Mensagem: do responsável para o gerente
+      const texto = `⚠️ *ALERTA DE VALIDADE*\nProduto: *${p.nome}*\nCódigo: ${p.codigo}\nLote: ${p.lote}\nVence em: ${dias} dias\n\nFavor verificar e rebaixar se necessário.`;
+
+      // abre WhatsApp para o gerente (mensagem escrita com info do produto).
+      abrirWhatsAppParaGerente(cfg.whatsGerente, texto);
+
+      // marca no Firestore que já notificou esse produto (evita duplicidade)
+      try {
+        await updateDoc(doc(db, `lojas/${cfg.loja}/produtos/${id}`), {
+          alert5diasSent: true,
+          lastAlertAt: new Date()
+        });
+      } catch (e) {
+        console.error("Erro ao marcar alert5diasSent:", e);
+      }
+    }
+
+    // Também atualiza cores no documento (opcional, útil para listagem)
+    let alertaCor = "normal";
+    if (dias <= 15 && dias > 10) alertaCor = "amarelo";
+    else if (dias <= 10 && dias > 5) alertaCor = "laranja";
+    else if (dias <= 5 && dias >= 0) alertaCor = "vermelho";
+    else if (dias < 0) alertaCor = "vencido";
+
+    // atualiza campo alertaCor caso tenha mudado
+    if (p.alertaCor !== alertaCor) {
+      try {
+        await updateDoc(doc(db, `lojas/${cfg.loja}/produtos/${id}`), { alertaCor });
+      } catch (e) {
+        console.error("Erro ao atualizar alertaCor:", e);
+      }
+    }
+  }
+}
+
+// --- Função para rebaixar um produto (chamar ao clicar no botão Rebaixar) ---
+// Rebaixa no Firestore -> status: "rebaixado", atualiza flags e envia WhatsApp (1 vez)
+export async function rebaixarProduto(prodId) {
+  const cfg = await getConfigDaLoja();
+
+
+  if (!cfg || !cfg.loja) return alert("Loja não identificada.");
+
+  const prodRef = doc(db, `lojas/${cfg.loja}/produtos/${prodId}`);
+  const prodSnap = await getDoc(prodRef);
+  if (!prodSnap.exists()) return alert("Produto não encontrado.");
+
+  const p = prodSnap.data();
+  // Se já rebaixado, nada faz
+  if (p.status === "rebaixado") return alert("Produto já está rebaixado.");
+
+  // Atualiza status para rebaixado
+  await updateDoc(prodRef, {
+    status: "rebaixado",
+    rebaixadoAt: new Date(),
+    rebaixadoNotified: true, // marcamos que vamos notificar agora
+    lastAlertAt: new Date()
+  });
+
+  // Mensagem do responsável para o gerente sobre rebaixamento
+  const texto = `🔻 *PRODUTO REBAIXADO*\nProduto: *${p.nome}*\nCódigo: ${p.codigo}\nLote: ${p.lote}\nRebaixado por: responsável.\nFavor coordenar retirada/ação.`;
+
+  abrirWhatsAppParaGerente(cfg.whatsGerente, texto);
+
+  // redirecionar para página de rebaixados (opcional)
+  // location.href = "Lista-rebaixados.html";
+}
+
+window.rebaixarProduto = rebaixarProduto;
+
+// --- Função para reverter (des-rebaixar) ---
+// Muda status para "normal" e envia WhatsApp ao gerente (apenas 1 vez)
+export async function reverterRebaixado(prodId) {
+  const cfg = await getConfigDaLoja();
+  if (!cfg || !cfg.loja) return alert("Loja não identificada.");
+
+  const prodRef = doc(db, `lojas/${cfg.loja}/produtos/${prodId}`);
+  const prodSnap = await getDoc(prodRef);
+  if (!prodSnap.exists()) return alert("Produto não encontrado.");
+
+  const p = prodSnap.data();
+  if (p.status !== "rebaixado") return alert("Produto não está rebaixado.");
+
+  await updateDoc(prodRef, {
+    status: "normal",
+    rebaixadoNotified: false,
+    revertidoAt: new Date(),
+    revertidoNotified: true,
+    lastAlertAt: new Date()
+  });
+
+  const texto = `✅ *REVERTIDO* \nProduto: *${p.nome}* \nCódigo: ${p.codigo}\nLote: ${p.lote}\nO produto foi revertido para a lista.`;
+
+  abrirWhatsAppParaGerente(cfg.whatsGerente, texto);
+
+  // opcional: redirecionar para Lista-produtos
+  // location.href = "Lista-produtos.html";
+}
+
+// --- Executa checagem ao carregar a página (recomendo deixar aqui) ---
+onAuthStateChanged(auth, (user) => {
+  if (!user) return;
+  // aguarda um pouco para garantir que tudo carregou
+  setTimeout(() => {
+    verificarAlertasDeValidade().catch(e => console.error(e));
+  }, 1200);
+});
+</script>
+</body>
+</html>

@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>ValiTec MJ — Redefinir Senha</title>
+
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;500;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="dashboard.css">
+
+  <style>
+    body {
+      background: radial-gradient(circle at 20% 20%, #0a0f1f, #050912);
+      color: #e0f7fa;
+      min-height: 100vh;
+      font-family: 'Poppins', sans-serif;
+    }
+
+    .reset-container {
+      position: absolute; top: 50%; left: 50%;
+      transform: translate(-50%, -50%);
+      width: 320px; padding: 2rem;
+      background: rgba(20,25,40,0.95);
+      border-radius: 16px;
+      box-shadow: 0 6px 30px rgba(0,0,0,0.6);
+      z-index: 2;
+      text-align:center;
+    }
+
+    input {
+      width: 100%; padding: 10px; border-radius: 10px;
+      background: rgba(255,255,255,0.07); border: none; color:white;
+      margin-top: 8px; text-align:center;
+    }
+
+    button {
+      margin-top: 14px; width: 100%; padding: 10px; border-radius: 10px;
+      border: none; background: linear-gradient(90deg,#00b4d8,#0077ff);
+      color: white; font-weight: 600; cursor: pointer;
+      transition: 0.2s;
+    }
+
+    button:hover { filter: brightness(1.15); }
+
+    #mensagem { margin-top:12px; font-size:14px; min-height:18px; }
+  </style>
+</head>
+
+<body>
+<canvas id="particleCanvas"></canvas>
+
+<div class="reset-container">
+  <h2>Redefinir Senha</h2>
+  <p style="opacity:.7;font-size:14px;margin-bottom:10px;">Digite seu e-mail para receber o link</p>
+
+  <input type="email" id="emailReset" placeholder="Seu e-mail cadastrado">
+  <button id="btnReset">Enviar Link</button>
+
+  <p id="mensagem"></p>
+
+  <a href="index.html" style="color:#4eff9a;font-size:13px;">← Voltar para Login</a>
+</div>
+
+
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
+import { getAuth, sendPasswordResetEmail } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
+
+const firebaseConfig = {
+  apiKey: "AIzaSyDPIlkTLbaeUiuvfvijWf5fofREw5oE8ic",
+  authDomain: "valitec-mj.firebaseapp.com",
+  projectId: "valitec-mj",
+  storageBucket: "valitec-mj.firebasestorage.app",
+  messagingSenderId: "616592039657",
+  appId: "1:616592039657:web:3827a890474111be85da78"
+};
+
+const app = initializeApp(firebaseConfig);
+const auth = getAuth(app);
+
+document.getElementById("btnReset").onclick = async () => {
+  const email = document.getElementById("emailReset").value.trim();
+  const msg = document.getElementById("mensagem");
+
+  if (!email) return msg.textContent = "⚠️ Digite o e-mail.";
+
+  try {
+    await sendPasswordResetEmail(auth, email);
+    msg.style.color = "#4eff9a";
+    msg.textContent = "✅ Link enviado! Verifique o e-mail.";
+  } catch (e) {
+    msg.style.color = "#ff6b6b";
+    msg.textContent = "⚠️ E-mail não encontrado.";
+  }
+};
+</script>
+
+<script>
+// Partículas
+const canvas=document.getElementById("particleCanvas"),ctx=canvas.getContext("2d");
+function resize(){canvas.width=innerWidth;canvas.height=innerHeight;}resize();onresize=resize;
+let particles=Array.from({length:60},()=>({x:Math.random()*innerWidth,y:Math.random()*innerHeight,r:Math.random()*2+1,dx:(Math.random()-.5)*.4,dy:(Math.random()-.5)*.4}));
+function draw(){
+  ctx.clearRect(0,0,innerWidth,innerHeight);ctx.fillStyle="rgba(0,200,255,.35)";
+  particles.forEach(p=>{ctx.beginPath();ctx.arc(p.x,p.y,p.r,0,Math.PI*2);ctx.fill();});
+  requestAnimationFrame(draw);particles.forEach(p=>{p.x+=p.dx;p.y+=p.dy;if(p.x<0||p.x>innerWidth)p.dx*=-1;if(p.y<0||p.y>innerHeight)p.dy*=-1;});
+}draw();
+</script>
+</body>
+</html>

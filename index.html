@@ -1,0 +1,217 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>ValiTec MJ — Login</title>
+
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;500;700&display=swap" rel="stylesheet">
+
+  <style>
+    :root{
+      --accent:#00c8ff;
+      --text:#dff6ff;
+    }
+
+    /* Corrige cálculo de tamanho */
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      background: radial-gradient(circle at 20% 20%, #0a0f1f, #050912);
+      color: var(--text);
+      min-height: 100vh;
+      font-family: 'Poppins', sans-serif;
+      overflow: hidden;
+    }
+
+    #particleCanvas { position: fixed; inset: 0; z-index: 0; }
+
+    .login-container {
+      position: absolute;
+      top: 50%; left: 50%;
+      transform: translate(-50%, -50%);
+      width: 330px;
+      padding: 2.2rem;
+      background: rgba(12,20,35,0.82);
+      border-radius: 16px;
+      border: 1px solid rgba(0,200,255,0.45);
+      box-shadow: 0 0 25px rgba(0,200,255,0.25);
+      backdrop-filter: blur(10px);
+      animation: fadeIn .35s ease-out;
+      z-index: 5;
+    }
+
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translate(-50%, -60%); }
+      to   { opacity: 1; transform: translate(-50%, -50%); }
+    }
+
+    .login-container h2 {
+      text-align: center;
+      margin-bottom: 18px;
+      color: var(--accent);
+      text-shadow: 0 0 14px rgba(0,200,255,0.45);
+      font-weight: 600;
+    }
+
+    /* Organiza o formulário */
+    #loginForm {
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+    }
+
+    label {
+      font-size: 13px;
+      color:#9fdfff;
+      margin: 0 0 4px 0;
+      display: block;
+    }
+
+    input {
+      width: 100%;
+      padding: 12px;
+      font-size: 14px;
+
+      border-radius: 10px;
+      background: rgba(255,255,255,0.08);
+      border: 1px solid rgba(255,255,255,0.18);
+      color:white;
+
+      margin: 0;
+      outline:none;
+      transition:.25s;
+    }
+
+    input:focus {
+      border-color: var(--accent);
+      box-shadow: 0 0 10px rgba(0,200,255,0.45);
+    }
+
+    button {
+      margin-top: 4px;
+      width: 100%; padding: 12px;
+      border-radius: 10px;
+      border: none;
+      cursor: pointer;
+      font-weight: 600;
+      background: linear-gradient(90deg,#00b4d8,#009bff);
+      color: #00131e;
+      box-shadow: 0 0 14px rgba(0,200,255,0.45);
+      transition:.25s;
+    }
+
+    button:hover { transform: scale(1.05); filter:brightness(1.15); }
+
+    .error { color:#ff6f6f; margin-top:2px; text-align:center; min-height:18px; }
+  </style>
+</head>
+
+<body>
+
+<canvas id="particleCanvas"></canvas>
+
+<div class="login-container">
+  <h2>ValiTec MJ</h2>
+
+  <form id="loginForm">
+    <div>
+      <label>E-mail</label>
+      <input type="email" id="email" required>
+    </div>
+
+    <div>
+      <label>Senha</label>
+      <input type="password" id="password" required>
+    </div>
+
+    <button type="submit">Entrar</button>
+    <p id="error" class="error"></p>
+
+    <a href="redefinir-senha.html"
+       style="display:block;margin-top:8px;text-align:center;color:#4eff9a;font-size:13px;">
+      Esqueci minha senha
+    </a>
+  </form>
+</div>
+
+<script type="module">
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
+  import { getAuth, signInWithEmailAndPassword } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
+  import { getFirestore, doc, setDoc, getDoc } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+
+  const firebaseConfig = {
+    apiKey: "AIzaSyDPIlkTLbaeUiuvfvijWf5fofREw5oE8ic",
+    authDomain: "valitec-mj.firebaseapp.com",
+    projectId: "valitec-mj",
+    storageBucket: "valitec-mj.firebasestorage.app",
+    messagingSenderId: "616592039657",
+    appId: "1:616592039657:web:3827a890474111be85da78"
+  };
+
+  const app = initializeApp(firebaseConfig);
+  const auth = getAuth(app);
+  const db = getFirestore(app);
+
+  const lojaPorGerente = {
+    "cd@supernovacidade.com": "loja_cd_cidade",
+    "novacidade@supernovacidade.com": "loja_cidade",
+    "terranova@supernovacidade.com": "loja_terranova",
+    "manoa@supernovacidade.com": "loja_manoa",
+    "zumbi@supernovacidade.com": "loja_zumbi",
+    "oswaldofrota@supernovacidade.com": "loja_oswaldo",
+    "mosaico@supernovacidade.com": "loja_mosaico",
+    "master@supernovacidade.com": "master"
+  };
+
+  document.getElementById("loginForm").addEventListener("submit", async (e)=> {
+    e.preventDefault();
+
+    const email = document.getElementById("email").value.trim().toLowerCase();
+    const senha = document.getElementById("password").value.trim();
+    const errorEl = document.getElementById("error");
+
+    errorEl.textContent = "";
+
+    try {
+      await signInWithEmailAndPassword(auth, email, senha);
+
+      const ref = doc(db, "usuarios", email);
+      const snap = await getDoc(ref);
+
+      let loja, cargo;
+
+      if (snap.exists()) {
+        loja = snap.data().loja;
+        cargo = snap.data().gerentes;
+      } else {
+        loja = prompt("Digite o código da loja (ex: loja_manoa):");
+        cargo = "gerente";
+
+        await setDoc(ref, { email, loja, gerentes: cargo }, { merge:true });
+      }
+
+      localStorage.setItem("usuarioLogado", email);
+      window.location.href = "dashboard.html";
+
+    } catch (e) {
+      errorEl.textContent = "Email ou senha incorretos.";
+    }
+  });
+
+</script>
+
+<script>
+// Partículas
+const canvas=document.getElementById("particleCanvas"),ctx=canvas.getContext("2d");
+function resize(){canvas.width=innerWidth;canvas.height=innerHeight;}resize();onresize=resize;
+let particles=[...Array(65)].map(()=>({x:Math.random()*innerWidth,y:Math.random()*innerHeight,r:Math.random()*2+1,dx:(Math.random()-.5)*.45,dy:(Math.random()-.5)*.45}));
+function draw(){ctx.clearRect(0,0,innerWidth,innerHeight);ctx.fillStyle="rgba(0,200,255,.35)";
+particles.forEach(p=>{ctx.beginPath();ctx.arc(p.x,p.y,p.r,0,Math.PI*2);ctx.fill();p.x+=p.dx;p.y+=p.dy;if(p.x<0||p.x>innerWidth)p.dx*=-1;if(p.y<0||p.y>innerHeight)p.dy*=-1;});
+requestAnimationFrame(draw);}draw();
+</script>
+
+</body>
+</html>

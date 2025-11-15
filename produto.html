@@ -1,0 +1,637 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>ValiTec MJ — Cadastro de Produto</title>
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;500;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="dashboard.css">
+
+<style>
+.hamburger {
+  display: none;
+  position: fixed;
+  top: 15px;
+  left: 15px;
+  font-size: 28px;
+  background: var(--accent);
+  color: #fff;
+  border: none;
+  border-radius: 6px;
+  padding: 6px 12px;
+  z-index: 9999;
+  cursor: pointer;
+}
+
+@media(max-width: 900px) {
+  .hamburger { display: block; }
+  .sidebar {
+    position: fixed;
+    left: -260px;
+    top: 0;
+    height: 100vh;
+    transition: .3s;
+    z-index: 9998;
+  }
+  .sidebar.open {
+    left: 0;
+  }
+  .main {
+    margin-left: 0 !important;
+  }
+}
+
+/* ================= IMPORTAR EXCEL (botão + modal) ================= */
+#importExcelBtn {
+  display:inline-block;margin:10px 0;padding:8px 12px;border-radius:10px;
+  background:linear-gradient(90deg,#00b4d8,#009bff);color:#00131e;font-weight:700;border:none;cursor:pointer;
+}
+#excelModal {
+  position:fixed;inset:0;display:none;align-items:center;justify-content:center;
+  background:rgba(0,0,0,0.45);z-index:9999;padding:20px;
+}
+#excelModal .card {
+  background:rgba(12,20,35,0.96);border-radius:12px;padding:14px;max-width:95vw;width:980px;color:#fff;
+  border:1px solid rgba(0,200,255,0.12);
+}
+#excelModal table{width:100%;border-collapse:collapse;font-size:13px;margin-top:8px;}
+#excelModal th, #excelModal td{padding:8px;border-bottom:1px solid rgba(255,255,255,0.04); text-align:left;}
+.row-invalid{background:rgba(255,90,90,0.06);}
+.row-valid{background:rgba(0,255,150,0.02);}
+.small-btn{padding:6px 8px;border-radius:8px;border:none;cursor:pointer;font-weight:600;}
+.use-btn{background:#4EFF9A;color:#000;}
+.saveall-btn{background:var(--accent);color:#000;margin-left:8px;}
+.close-btn{background:transparent;color:#fff;border:1px solid rgba(255,255,255,0.06);margin-left:8px;}
+.header-row{display:flex;gap:8px;align-items:center;justify-content:space-between;}
+.footer-actions{display:flex;gap:8px;align-items:center;margin-top:12px;justify-content:flex-end;}
+.invalid-count{color:#ff9b9b;font-weight:700;margin-left:8px;}
+.foto-area{display:flex;gap:8px;align-items:center}
+.theme-toggle{position:fixed;right:16px;bottom:16px;padding:10px;border-radius:8px;border:none;cursor:pointer}
+</style>
+
+</head>
+<body>
+  <canvas id="particleCanvas"></canvas>
+
+  <div class="app-container">
+    <button id="btnMenu" class="hamburger">☰</button>
+    <aside class="sidebar" id="sidebarMenu">
+      <h1></h1>
+      <nav>
+        <a href="dashboard.html">Painel</a>
+        <a href="#" class="active">Cadastrar Produto</a>
+        <a href="Lista-produtos.html">Lista de Produtos</a>
+        <a href="Lista-rebaixados.html">Produtos Rebaixados</a>
+        <a href="calendario.html">Calendário</a>
+        <a href="perfil.html">Perfil</a>
+        <a href="cadastro-usuarios.html">Cadastrar Usuários</a>
+        <a href="relatorios.html">Relatórios</a>
+        <a href="#" onclick="localStorage.clear(); location.href='index.html'">Sair</a>
+      </nav>
+    </aside>
+
+    <main class="main">
+      <h2 id="tituloPagina" style="text-align:center;">Cadastrar Produto</h2>
+
+      <form id="formProduto" class="form-produto">
+
+        <label>Nome do Produto</label>
+        <input type="text" id="nome" required>
+
+        <label>Código de Barras</label>
+        <div style="display:flex; gap:8px;">
+          <input type="text" id="codigo" placeholder="Aguardando leitura..." required style="flex:1;">
+          <button type="button" id="btnScan" style="padding:6px 12px;border-radius:6px;background:var(--accent);border:none;cursor:pointer;">📷 Ler</button>
+        </div>
+
+        <video id="scannerPreview" style="display:none;width:260px;border-radius:8px;margin-top:8px;border:1px solid rgba(255,255,255,0.4);"></video>
+
+        <label>Lote</label>
+        <input type="text" id="lote" required>
+
+        <!-- CAMPO PREÇO ADICIONADO -->
+        <label>Preço</label>
+        <input type="number" id="preco" step="0.01" placeholder="0,00" required>
+
+        <label>Setor</label>
+        <select id="setor" required>
+          <option value="Mercearia">Mercearia</option>
+          <option value="Bebidas">Bebidas</option>
+          <option value="Frios">Frios</option>
+          <option value="Higiene">Higiene</option>
+          <option value="Limpeza">Limpeza</option>
+          <option value="Açougue">Açougue</option>
+        </select>
+
+        <label>Data de Validade</label>
+        <input type="date" id="validade" required>
+
+        <label>Foto do Produto</label>
+        <div class="foto-area">
+          <video id="cameraPreview" autoplay playsinline style="display:none;width:260px;border-radius:8px;border:1px solid rgba(255,255,255,0.3);"></video>
+          <img id="previewFoto" style="display:none;width:140px;border-radius:6px;border:1px solid rgba(255,255,255,0.3);" />
+          <input type="file" id="foto" accept="image/*" style="display:none;" />
+
+          <button type="button" id="btnOpenCamera">📷 Abrir Câmera</button>
+          <button type="button" id="btnCapturar" style="display:none;">✅ Capturar Foto</button>
+        </div>
+
+       <button type="button" id="btnSalvar">Salvar Produto</button>
+        <button type="button" id="btnLimpar" class="btnEdit" style="background:#555;border:none;">Limpar Campos</button>
+
+      </form>
+
+<!-- ==================== IMPORTAR EXCEL - HTML ==================== -->
+
+<button id="importExcelBtn">Importar Excel</button>
+<input type="file" id="excelInput" accept=".xlsx, .xls" style="display:none;">
+
+<div id="excelModal">
+  <div class="card">
+    <div class="header-row">
+      <h2>Pré-visualização da Planilha</h2>
+      <span id="invalidCount" class="invalid-count"></span>
+    </div>
+
+    <table id="excelTable">
+      <thead>
+        <tr>
+          <th>Nome</th>
+          <th>Código</th>
+          <th>Lote</th>
+          <th>Validade</th>
+          <th>Preço</th>
+          <th>Fornecedor</th>
+          <th>Ações</th>
+        </tr>
+      </thead>
+      <tbody></tbody>
+    </table>
+
+    <div class="footer-actions">
+      <button class="small-btn close-btn" id="closeExcelModal">Fechar</button>
+      <button class="small-btn saveall-btn" id="saveAllLines">Salvar Tudo</button>
+    </div>
+  </div>
+</div>
+
+    </main>
+  </div>
+
+<script src="https://unpkg.com/@zxing/browser@0.1.1"></script>
+
+<script>
+// CÂMERA – CORRIGIDA E 100% FUNCIONANDO (mantive seu código)
+let stream;
+const cameraPreview = document.getElementById("cameraPreview");
+const previewFoto = document.getElementById("previewFoto");
+const inputFoto = document.getElementById("foto");
+const btnOpenCamera = document.getElementById("btnOpenCamera");
+const btnCapturar = document.getElementById("btnCapturar");
+const scannerPreview = document.getElementById("scannerPreview");
+
+// ABRIR CÂMERA
+btnOpenCamera.onclick = async () => {
+  try {
+    stream = await navigator.mediaDevices.getUserMedia({
+      video: { facingMode: "environment" },
+      audio: false
+    });
+
+    cameraPreview.srcObject = stream;
+    await cameraPreview.play();
+
+    cameraPreview.style.display = "block";
+    previewFoto.style.display = "none";
+    btnCapturar.style.display = "inline-block";
+
+  } catch (e) {
+    alert("Erro ao acessar câmera.");
+    console.error(e);
+  }
+};
+
+// CAPTURAR FOTO
+btnCapturar.onclick = async () => {
+  const w = cameraPreview.videoWidth || 800;
+  const h = cameraPreview.videoHeight || 600;
+
+  const canvas = document.createElement("canvas");
+  canvas.width = w;
+  canvas.height = h;
+
+  const ctx = canvas.getContext("2d");
+  ctx.drawImage(cameraPreview, 0, 0, w, h);
+
+  const dataURL = canvas.toDataURL("image/jpeg");
+
+  previewFoto.src = dataURL;
+  previewFoto.style.display = "block";
+
+  const blob = await fetch(dataURL).then(r => r.blob());
+  window.fotoBlob = blob;
+
+  if (stream) stream.getTracks().forEach(t => t.stop());
+  cameraPreview.style.display = "none";
+  btnCapturar.style.display = "none";
+};
+</script>
+
+<!-- Carrega XLSX -->
+<script src="https://cdn.jsdelivr.net/npm/xlsx/dist/xlsx.full.min.js"></script>
+
+<!-- ÚNICO module script com Firebase + lógica de salvar/editar/importar XLSX -->
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
+import { getFirestore, doc, getDoc, setDoc } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+import { getStorage, ref, uploadBytes, getDownloadURL } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-storage.js";
+import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
+
+const firebaseConfig = {
+  apiKey: "AIzaSyDPIlkTLbaeUiuvfvijWf5fofREw5oE8ic",
+  authDomain: "valitec-mj.firebaseapp.com",
+  projectId: "valitec-mj",
+  storageBucket: "valitec-mj.firebasestorage.app",
+  messagingSenderId: "616592039657",
+  appId: "1:616592039657:web:3827a890474111be85da78"
+};
+
+const app = initializeApp(firebaseConfig);
+const db = getFirestore(app);
+const storage = getStorage(app);
+const auth = getAuth(app);
+
+// DOM references inside module
+const nome = document.getElementById('nome');
+const codigo = document.getElementById('codigo');
+const lote = document.getElementById('lote');
+const preco = document.getElementById('preco');
+const setor = document.getElementById('setor');
+const validade = document.getElementById('validade');
+const inputFile = document.getElementById('foto');
+const preview = document.getElementById('previewFoto');
+const formProduto = document.getElementById('formProduto');
+const scanner = document.getElementById('scannerPreview');
+
+const params = new URLSearchParams(location.search);
+const produtoId = params.get("id");
+
+// EDITAR: preenche campos se vier ?id=
+onAuthStateChanged(auth, async user => {
+  if (!user || !produtoId) return;
+
+  document.getElementById("tituloPagina").textContent = "Editar Produto";
+  document.getElementById("btnSalvar").textContent = "Salvar Alterações";
+
+  const snapUser = await getDoc(doc(db, "usuarios", user.email));
+  const loja = snapUser.data().loja;
+
+  const prodSnap = await getDoc(doc(db, `lojas/${loja}/produtos/${produtoId}`));
+  const p = prodSnap.data();
+
+  nome.value = p.nome;
+  codigo.value = p.codigo;
+  lote.value = p.lote;
+  preco.value = p.preco ?? "";
+  setor.value = p.setor;
+  validade.value = p.dataValidadeISO;
+
+  preview.src = p.fotoURL;
+  preview.style.display = "block";
+  document.getElementById("foto").required = false;
+});
+
+// SALVAR/ATUALIZAR UM PRODUTO
+document.getElementById("btnSalvar").onclick = async () => {
+
+  const user = auth.currentUser;
+  if (!user) {
+    alert("Você precisa estar logado.");
+    return;
+  }
+
+  const snapUser = await getDoc(doc(db, "usuarios", user.email));
+  const loja = snapUser.data().loja;
+
+  const nomeProduto = nome.value.trim();
+  const codigoProduto = codigo.value.trim();
+  const loteProduto = lote.value.trim();
+  const precoProduto = parseFloat(preco.value) || 0;
+  const setorProduto = setor.value;
+  const validadeProduto = validade.value;
+
+  if (!nomeProduto || !codigoProduto || !loteProduto || !validadeProduto) {
+    alert("Preencha todos os campos obrigatórios.");
+    return;
+  }
+
+  const [yyyy, mm, dd] = validadeProduto.split("-");
+  const validadeBR = `${dd}/${mm}/${yyyy}`;
+
+  const id = produtoId || crypto.randomUUID();
+  let fotoURLFinal = "";
+
+  // 1 — foto capturada (câmera)
+  if (window.fotoBlob) {
+    const fotoRef = ref(storage, `produtos/${loja}/${id}.jpg`);
+    await uploadBytes(fotoRef, window.fotoBlob);
+    fotoURLFinal = await getDownloadURL(fotoRef);
+  }
+  // 2 — foto enviada via arquivo
+  else if (inputFile.files.length > 0) {
+    const fotoRef = ref(storage, `produtos/${loja}/${id}.jpg`);
+    await uploadBytes(fotoRef, inputFile.files[0]);
+    fotoURLFinal = await getDownloadURL(fotoRef);
+  }
+  // 3 — manter foto existente ao editar
+  else if (produtoId) {
+    const snapProd = await getDoc(doc(db, `lojas/${loja}/produtos/${produtoId}`));
+    fotoURLFinal = snapProd.data().fotoURL || "";
+  }
+
+  await setDoc(doc(db, `lojas/${loja}/produtos/${id}`), {
+    nome: nomeProduto,
+    codigo: codigoProduto,
+    lote: loteProduto,
+    preco: precoProduto,
+    setor: setorProduto,
+    dataValidadeISO: validadeProduto,
+    dataValidadeBR: validadeBR,
+    fotoURL: fotoURLFinal,
+    status: "normal",
+    criadoEm: new Date()
+  }, { merge: true });
+
+  location.href = "Lista-produtos.html";
+};
+
+// LIMPAR
+const btnLimpar = document.getElementById('btnLimpar');
+btnLimpar.onclick = () => {
+  formProduto.reset();
+  preview.style.display = "none";
+  scanner.style.display = "none";
+  // limpar fotoBlob se existir
+  window.fotoBlob = null;
+};
+
+/* =================== IMPORTAR EXCEL (XLSX) =================== */
+const btnOpen = document.getElementById("importExcelBtn");
+const fileInput = document.getElementById("excelInput");
+const modal = document.getElementById("excelModal");
+const closeModal = document.getElementById("closeExcelModal");
+const tableBody = document.querySelector("#excelTable tbody");
+const invalidCount = document.getElementById("invalidCount");
+const saveAllBtn = document.getElementById("saveAllLines");
+
+// Abrir seletor de arquivo
+btnOpen.onclick = () => fileInput.click();
+
+// Quando arquivo for selecionado
+fileInput.addEventListener("change", function (e) {
+  const file = e.target.files[0];
+  if (!file) return;
+
+  const reader = new FileReader();
+  reader.onload = function (evt) {
+    const data = new Uint8Array(evt.target.result);
+    const workbook = XLSX.read(data, { type: 'array' });
+
+    const sheet = workbook.Sheets[workbook.SheetNames[0]];
+    const json = XLSX.utils.sheet_to_json(sheet, { defval: "" });
+
+    montarTabela(json);
+    modal.style.display = "flex";
+  };
+
+  reader.readAsArrayBuffer(file);
+});
+
+// Montar tabela no modal
+function montarTabela(linhas) {
+  tableBody.innerHTML = "";
+  let invalidos = 0;
+
+  linhas.forEach((item, index) => {
+    // Normaliza chaves (aceita Nome, nome, Nome do Produto, etc.)
+    const nomeVal = item.nome || item.Nome || item["Nome do Produto"] || "";
+    const codigoVal = item.codigo || item.Código || item.Codigo || item["Código de Barras"] || "";
+    const loteVal = item.lote || item.Lote || "";
+    const validadeVal = item.validade || item.Validade || item.validade || "";
+    const precoVal = item.preco || item.Preço || item.Preco || "";
+    const fornecedorVal = item.fornecedor || item.Fornecedor || "";
+
+    const valid = nomeVal && codigoVal && validadeVal && loteVal ? true : false;
+
+    if (!valid) invalidos++;
+
+    const row = document.createElement("tr");
+    row.classList.add(valid ? "row-valid" : "row-invalid");
+
+    row.innerHTML = `
+      <td>${nomeVal}</td>
+      <td>${codigoVal}</td>
+      <td>${loteVal}</td>
+      <td>${validadeVal}</td>
+      <td>${precoVal}</td>
+      <td>${fornecedorVal}</td>
+      <td>
+        <button class="small-btn use-btn" data-item='${JSON.stringify({
+          nome: nomeVal, codigo: codigoVal, lote: loteVal, validade: validadeVal, preco: precoVal, fornecedor: fornecedorVal
+        }).replaceAll("'", "&#39;")}'>Usar</button>
+      </td>
+    `;
+
+    tableBody.appendChild(row);
+  });
+
+  invalidCount.innerHTML =
+    invalidos > 0 ? `${invalidos} linhas inválidas` : "Todas válidas";
+
+  // Delegação para os botões 'Usar'
+  tableBody.querySelectorAll(".use-btn").forEach(btn => {
+    btn.onclick = (ev) => {
+      const item = JSON.parse(ev.currentTarget.getAttribute("data-item"));
+      usarLinha(item);
+    };
+  });
+}
+
+// Preenche os campos do cadastro
+function usarLinha(item) {
+  document.getElementById("nome").value = item.nome || "";
+  document.getElementById("codigo").value = item.codigo || "";
+  document.getElementById("lote").value = item.lote || "";
+  // se valor em formato BR dd/mm/yyyy converte para ISO para input date
+  const v = item.validade || "";
+  if (v.includes("/")) {
+    const [d,m,y] = v.split("/");
+    document.getElementById("validade").value = `${y}-${m.padStart(2,"0")}-${d.padStart(2,"0")}`;
+  } else {
+    document.getElementById("validade").value = v;
+  }
+  document.getElementById("preco").value = item.preco || "";
+  // fornecedor não tem campo visível no form original, ignorar se não existir
+  const fornecedorEl = document.getElementById("fornecedor");
+  if (fornecedorEl) fornecedorEl.value = item.fornecedor || "";
+
+  alert("Linha aplicada ao formulário!");
+  modal.style.display = "none";
+}
+
+// Fechar modal
+closeModal.onclick = () => {
+  modal.style.display = "none";
+};
+
+/* validação de datas e salvar todas as linhas no Firebase */
+function validarDataBR(dataStr) {
+  if (!dataStr) return false;
+
+  // Aceita formatos comuns: "10/02/2025", "2025-02-10"
+  if (dataStr.includes("/")) {
+    const [d, m, y] = dataStr.split("/").map(Number);
+    return d >= 1 && d <= 31 && m >= 1 && m <= 12 && y >= 1900;
+  }
+
+  if (dataStr.includes("-")) {
+    const [y, m, d] = dataStr.split("-").map(Number);
+    return d >= 1 && d <= 31 && m >= 1 && m <= 12;
+  }
+
+  return false;
+}
+
+// Converte dd/mm/yyyy para yyyy-mm-dd (ISO)
+function converterParaISO(dataStr) {
+  if (!dataStr) return "";
+  if (dataStr.includes("/")) {
+    const [d, m, y] = dataStr.split("/");
+    return `${y}-${m.padStart(2, "0")}-${d.padStart(2, "0")}`;
+  }
+  return dataStr; // assume já ISO
+}
+
+saveAllLines.onclick = async () => {
+  const user = auth.currentUser;
+  if (!user) {
+    alert("Você precisa estar logado.");
+    return;
+  }
+
+  // Buscar loja do usuário
+  const snapUser = await getDoc(doc(db, "usuarios", user.email));
+  const loja = snapUser.data().loja;
+
+  // Pegar todas as linhas da tabela Excel
+  const rows = document.querySelectorAll("#excelTable tbody tr");
+
+  if (rows.length === 0) {
+    alert("Nenhuma linha importada.");
+    return;
+  }
+
+  let enviados = 0;
+  let erros = 0;
+
+  for (let r of rows) {
+    let dados = {
+      nome: r.cells[0].innerText.trim(),
+      codigo: r.cells[1].innerText.trim(),
+      lote: r.cells[2].innerText.trim(),
+      validade: r.cells[3].innerText.trim(),
+      preco: parseFloat(r.cells[4].innerText.replace(",", ".")) || 0,
+      fornecedor: r.cells[5].innerText.trim()
+    };
+
+    // Validar campos obrigatórios
+    if (!dados.nome || !dados.codigo || !dados.lote || !dados.validade) {
+      erros++;
+      continue;
+    }
+
+    // Validar data
+    if (!validarDataBR(dados.validade)) {
+      erros++;
+      continue;
+    }
+
+    // Converter para ISO
+    const validadeISO = converterParaISO(dados.validade);
+    const validadeBR = dados.validade.includes("/") ?
+                      dados.validade :
+                      `${validadeISO.split("-")[2]}/${validadeISO.split("-")[1]}/${validadeISO.split("-")[0]}`;
+
+    // Gerar ID único
+    const id = crypto.randomUUID();
+
+    // Criar documento no Firebase
+    try {
+      await setDoc(doc(db, `lojas/${loja}/produtos/${id}`), {
+        nome: dados.nome,
+        codigo: dados.codigo,
+        lote: dados.lote,
+        preco: dados.preco,
+        fornecedor: dados.fornecedor || "",
+        setor: "Não Informado",
+        dataValidadeISO: validadeISO,
+        dataValidadeBR: validadeBR,
+        fotoURL: "",
+        status: "normal",
+        criadoEm: new Date()
+      });
+
+      enviados++;
+
+    } catch (e) {
+      console.error(e);
+      erros++;
+    }
+  }
+
+  alert(
+    `Envio finalizado!\n\n` +
+    `✔ ${enviados} produtos enviados com sucesso.\n` +
+    `❌ ${erros} produtos não foram enviados.`
+  );
+
+  modal.style.display = "none";
+};
+
+</script>
+
+<button id="toggleTheme" class="theme-toggle">🌙</button>
+<script>
+const toggle = document.getElementById("toggleTheme");
+
+function aplicarTema() {
+  const tema = localStorage.getItem("temaValitec") || "dark";
+  if (tema === "light") {
+    document.documentElement.classList.add("light-mode");
+    toggle.textContent = "🌙";
+  } else {
+    document.documentElement.classList.remove("light-mode");
+    toggle.textContent = "🔆";
+  }
+}
+
+toggle.onclick = () => {
+  const atual = localStorage.getItem("temaValitec") || "dark";
+  const novo = (atual === "dark") ? "light" : "dark";
+  localStorage.setItem("temaValitec", novo);
+  aplicarTema();
+};
+
+aplicarTema();
+</script>
+
+<script>
+const btnMenu = document.getElementById("btnMenu");
+const sidebarMenu = document.getElementById("sidebarMenu");
+btnMenu.onclick = () => {
+  sidebarMenu.classList.toggle("open");
+};
+</script>
+
+</body>
+</html>

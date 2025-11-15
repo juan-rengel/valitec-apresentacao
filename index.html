@@ -6,7 +6,6 @@
   <title>ValiTec MJ — Login</title>
 
   <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;500;700&display=swap" rel="stylesheet">
-
   <style>
     :root{
       --accent:#00c8ff;
@@ -224,6 +223,7 @@ function draw(){ctx.clearRect(0,0,innerWidth,innerHeight);ctx.fillStyle="rgba(0,
 particles.forEach(p=>{ctx.beginPath();ctx.arc(p.x,p.y,p.r,0,Math.PI*2);ctx.fill();p.x+=p.dx;p.y+=p.dy;if(p.x<0||p.x>innerWidth)p.dx*=-1;if(p.y<0||p.y>innerHeight)p.dy*=-1;});
 requestAnimationFrame(draw);}draw();
 </script>
+
 
 </body>
 </html>

@@ -1,0 +1,66 @@
+/* ================================ */
+/* 🌙🌞 TEMA DARK / LIGHT VALITEC   */
+/* ================================ */
+
+:root {
+    --bg: #0a0f1a;
+    --bg-alt: #111827;
+    --text: #ffffff;
+    --accent: #00c8ff;
+    --card: rgba(255,255,255,0.05);
+}
+
+.light-mode {
+    --bg: #f2f2f7;
+    --bg-alt: #ffffff;
+    --text: #111;
+    --accent: #007aff;
+    --card: rgba(0,0,0,0.05);
+}
+
+/* Fundo geral */
+body {
+    background: var(--bg);
+    color: var(--text);
+    transition: background 0.3s, color 0.3s;
+}
+
+/* Cards */
+.perfil-box, .produto-card, .main, .sidebar {
+    background: var(--card);
+    backdrop-filter: blur(6px);
+    transition: background 0.3s;
+}
+
+/* Inputs */
+.input-field, input, select {
+    background: var(--card);
+    border: 1px solid rgba(255,255,255,0.2);
+    color: var(--text);
+}
+
+.light-mode input,
+.light-mode select {
+    border-color: rgba(0,0,0,0.2);
+}
+
+/* Botão tema */
+.theme-toggle {
+    position: fixed;
+    bottom: 25px;
+    right: 25px;
+    padding: 12px 16px;
+    background: var(--accent);
+    color: #fff;
+    border: none;
+    border-radius: 50px;
+    cursor: pointer;
+    font-size: 22px;
+    box-shadow: 0 0 10px rgba(0,0,0,0.4);
+    z-index: 99999;
+    transition: 0.3s;
+}
+
+.theme-toggle:hover {
+    transform: scale(1.1);
+}

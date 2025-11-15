@@ -6,6 +6,7 @@
   <title>ValiTec MJ — Perfil</title>
   <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;500;700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="dashboard.css">
+  <link rel="stylesheet" href="theme.css">
 </head>
 <body>
   <canvas id="particleCanvas"></canvas>
@@ -30,16 +31,17 @@
 
  <main class="main fade-in">
   <h2 class="page-title">Configurações do Perfil</h2>
+<form id="formPerfil" class="perfil-box">
 
-  <form id="formPerfil" class="perfil-box">
-    <label>WhatsApp do Gerente</label>
-<input type="text" id="whatsGerente" placeholder="Ex: 92988001122">
+  <label>WhatsApp do Gerente</label>
+  <input type="text" id="whatsGerente" class="input-field" placeholder="Ex: 92988001122">
 
-<label>WhatsApp do Responsável pela Rebaixa</label>
-<input type="text" id="whatsResponsavel" placeholder="Ex: 92991234567">
+  <label>WhatsApp do Responsável pela Rebaixa</label>
+  <input type="text" id="whatsResponsavel" class="input-field" placeholder="Ex: 92991234567">
 
-    <button id="salvarPerfil" class="btn-primary">💾 Salvar Alterações</button>
-  </form>
+  <button id="salvarPerfil" class="btn-primary">💾 Salvar Alterações</button>
+
+</form>
 </main>
   </div>
 
@@ -183,12 +185,16 @@ hamburger.textContent = '☰';
 hamburger.onclick = () => sidebar.classList.toggle('open');
 document.body.appendChild(hamburger);
 </script>
+
+
+
 <button id="toggleTheme" class="theme-toggle">🌙</button>
 <script>
 const toggle = document.getElementById("toggleTheme");
 
 function aplicarTema() {
   const tema = localStorage.getItem("temaValitec") || "dark";
+
   if (tema === "light") {
     document.documentElement.classList.add("light-mode");
     toggle.textContent = "🌙";
@@ -206,6 +212,9 @@ toggle.onclick = () => {
 };
 
 aplicarTema();
+</script>
+
+
 </script>
 </body>
 </html>

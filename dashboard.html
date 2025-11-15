@@ -6,6 +6,7 @@
   <title>ValiTec MJ — Dashboard</title>
   <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;500;700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="dashboard.css">
+  <link rel="stylesheet" href="theme.css">
 </head>
 
 <body>
@@ -178,6 +179,7 @@
   hamburger.onclick = () => sidebar.classList.toggle('open');
   document.body.appendChild(hamburger);
 
+
   // --- Fundo de partículas ---
   const canvas = document.getElementById('particleCanvas');
   if (canvas) {
@@ -202,33 +204,35 @@
     animate();
   }
 
-  // --- Tema Claro/Escuro ---
-  const toggle = document.createElement("button");
-  toggle.id = "toggleTheme";
-  toggle.className = "theme-toggle";
-  toggle.textContent = "🌙";
-  document.body.appendChild(toggle);
 
-  function aplicarTema() {
-    const tema = localStorage.getItem("temaValitec") || "dark";
-    if (tema === "light") {
-      document.documentElement.classList.add("light-mode");
-      toggle.textContent = "🌙";
-    } else {
-      document.documentElement.classList.remove("light-mode");
-      toggle.textContent = "🔆";
-    }
+
+  </script> 
+
+  
+<button id="toggleTheme" class="theme-toggle">🌙</button>
+<script>
+const toggle = document.getElementById("toggleTheme");
+
+function aplicarTema() {
+  const tema = localStorage.getItem("temaValitec") || "dark";
+
+  if (tema === "light") {
+    document.documentElement.classList.add("light-mode");
+    toggle.textContent = "🌙";
+  } else {
+    document.documentElement.classList.remove("light-mode");
+    toggle.textContent = "🔆";
   }
+}
 
-  toggle.onclick = () => {
-    const atual = localStorage.getItem("temaValitec") || "dark";
-    const novo = (atual === "dark") ? "light" : "dark";
-    localStorage.setItem("temaValitec", novo);
-    aplicarTema();
-  };
-
+toggle.onclick = () => {
+  const atual = localStorage.getItem("temaValitec") || "dark";
+  const novo = (atual === "dark") ? "light" : "dark";
+  localStorage.setItem("temaValitec", novo);
   aplicarTema();
-  </script>
+};
 
+aplicarTema();
+</script>
 </body>
 </html>

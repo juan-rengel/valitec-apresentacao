@@ -319,50 +319,97 @@ onAuthStateChanged(auth,async user=>{
 });
 
 /* === SALVAR === */
-document.getElementById("btnSalvar").onclick=async()=>{
-  const nome=nomeEl.value.trim();
-  const codigo=codigoEl.value.trim();
-  const lote=loteEl.value.trim();
-  const preco=parsePrice(precoEl.value);
+document.getElementById("btnSalvar").onclick = async () => {
+
+  // Fecha a câmera antes de salvar (IMPORTANTE no Android/iOS)
+  try {
+    if (cameraPreview.srcObject) {
+      cameraPreview.srcObject.getTracks().forEach(t => t.stop());
+      cameraPreview.srcObject = null;
+    }
+    cameraPreview.style.display = "none";
+  } catch(e){}
+
+  const nome = nomeEl.value.trim();
+  const codigo = codigoEl.value.trim();
+  const lote = loteEl.value.trim();
+  const preco = parsePrice(precoEl.value);
   const quantidade = Number(document.getElementById("quantidade").value);
-  const setor=setorEl.value;
-  const iso=validadeEl.value;
+  const setor = setorEl.value;
+  const iso = validadeEl.value;
 
-  if(!nome||!codigo||!lote||!iso){alert("Preencha todos os campos.");return;}
+  if (!nome || !codigo || !lote || !iso) {
+    alert("Preencha todos os campos.");
+    return;
+  }
 
-  if (!quantidade && quantidade !== 0) {
+  if (isNaN(quantidade)) {
     alert("Informe a quantidade.");
     return;
-}
-  const id=produtoId||crypto.randomUUID();
-  let fotoURL="";
+  }
 
-// Sempre tenta enviar foto se existir
-if (fotoBlob) {
-    const refImg = ref(storage, `produtos/${lojaAtual}/${id}.jpg`);
-    await uploadBytes(refImg, fotoBlob);
-    fotoURL = await getDownloadURL(refImg);
-} else {
-    // Pega a foto antiga se não tirou nova
-    if (produtoId) {
-        let s = await getDoc(doc(db, `lojas/${lojaAtual}/produtos/${produtoId}`));
-        fotoURL = s.data().fotoURL || "";
+  const id = produtoId || crypto.randomUUID();
+  let fotoURL = "";
+
+  // -------------------------------------------------------
+  // 📸 UPLOAD DA FOTO (correção completa)
+  // -------------------------------------------------------
+  try {
+
+    if (fotoBlob) {
+      // Foto nova -> envia SEMPRE
+      const refImg = ref(storage, `produtos/${lojaAtual}/${id}.jpg`);
+      await uploadBytes(refImg, fotoBlob);
+      fotoURL = await getDownloadURL(refImg);
+
+    } else if (produtoId) {
+      // Sem foto nova, mas editando -> mantém foto antiga
+      const snapOld = await getDoc(doc(db, `lojas/${lojaAtual}/produtos/${produtoId}`));
+      fotoURL = snapOld.exists() ? (snapOld.data().fotoURL || "") : "";
+
+    } else {
+      // Novo produto sem foto -> deixa vazio
+      fotoURL = "";
     }
-}
 
-  await setDoc(doc(db,`lojas/${lojaAtual}/produtos/${id}`),{
-    nome,codigo,lote,preco,quantidade,setor,
-    dataValidadeISO:iso,
-    dataValidadeBR:convBR(iso),
-    fotoURL,
-    status:"normal",
-    alertaCor:"normal",
-    alert5diasSent:false,
-    criadoEm:produtoId?undefined:new Date(),
-    atualizadoEm:new Date()
-  },{merge:true});
+  } catch (e) {
+    console.error("Erro no upload da foto:", e);
+    alert("Erro ao enviar a foto. Tente novamente.");
+    return;
+  }
 
-  location.href="Lista-produtos.html";
+  // -------------------------------------------------------
+  // 📦 Salvando produto
+  // -------------------------------------------------------
+  try {
+    await setDoc(
+      doc(db, `lojas/${lojaAtual}/produtos/${id}`),
+      {
+        nome,
+        codigo,
+        lote,
+        preco,
+        quantidade,
+        setor,
+        dataValidadeISO: iso,
+        dataValidadeBR: convBR(iso),
+        fotoURL,
+        status: "normal",
+        alertaCor: "normal",
+        alert5diasSent: false,
+        criadoEm: produtoId ? undefined : new Date(),
+        atualizadoEm: new Date()
+      },
+      { merge: true }
+    );
+
+    alert("Produto salvo com sucesso!");
+    location.href = "Lista-produtos.html";
+
+  } catch (e) {
+    console.error("Erro ao salvar produto:", e);
+    alert("Erro ao salvar produto. Veja o console.");
+  }
 };
 
 /* === LIMPAR === */

@@ -251,26 +251,34 @@ btnOpenCamera.onclick=async()=>{
 
 btnCapturar.onclick = async () => {
 
-  if (cameraPreview.readyState < 2) {
-      alert("Aguarde 1 segundo a câmera carregar.");
+  // Aguarda a câmera carregar no celular
+  await new Promise(res => setTimeout(res, 800));
+
+  const video = cameraPreview;
+
+  if (!video || video.videoWidth === 0 || video.videoHeight === 0) {
+      alert("A câmera ainda está carregando. Tente novamente em 1 segundo.");
       return;
   }
 
+  // Garante captura em todos celulares
   const canvas = document.createElement("canvas");
-  canvas.width = cameraPreview.videoWidth;
-  canvas.height = cameraPreview.videoHeight;
+  canvas.width = video.videoWidth;
+  canvas.height = video.videoHeight;
 
   const ctx = canvas.getContext("2d");
-  ctx.drawImage(cameraPreview, 0, 0, canvas.width, canvas.height);
+  ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
 
   const dataURL = canvas.toDataURL("image/jpeg", 0.9);
 
+  // Mostra preview
   previewEl.src = dataURL;
   previewEl.style.display = "block";
 
+  // Gera Blob da imagem
   fotoBlob = await (await fetch(dataURL)).blob();
 
-  console.log("Foto capturada:", fotoBlob);
+  console.log("📸 Foto capturada no celular:", fotoBlob);
 };
 
 /* === ARQUIVO === */
